@@ -2,7 +2,7 @@
   "schema": 1,
   "components": [
     {
-      "id": "andrug_bmwweather_bridge",
+      "id": "andrug-bmwweather-bridge",
       "kind": "tool",
       "path": "native/andrug_bmwweather_bridge"
     }
