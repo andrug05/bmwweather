@@ -5,6 +5,7 @@
   "title": "BMW Weather Bridge",
   "description": "Feeds the native BMW ID7 Weather cache from Open-Meteo",
   "mguHmi": ["ID7"],
+  "uninstallable": true,
   "internet": true,
   "uids": [12214],
   "files": [
