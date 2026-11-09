@@ -1,0 +1,18 @@
+[Unit]
+Description=BMW ID7 Weather cache bridge (Open-Meteo)
+After=network.target mgu-uplink.service
+Wants=mgu-uplink.service
+
+[Service]
+Type=simple
+User=12214
+WorkingDirectory=/var/opt/andrug_bmwweather_bridge/current
+Environment=BMW_WEATHER_CONFIG=/var/opt/andrug_bmwweather_bridge/current/config.json
+ExecStart=/usr/bin/node /var/opt/andrug_bmwweather_bridge/current/bridge.js
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
