@@ -1,7 +1,7 @@
 {
   "id": "andrug-bmwweather-bridge",
   "kind": "tool",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "title": "BMW Weather Bridge",
   "description": "Feeds the native BMW ID7 Weather cache from Open-Meteo",
   "mguHmi": [
@@ -10,7 +10,7 @@
   "uninstallable": true,
   "internet": true,
   "uids": [
-    12214
+    12256
   ],
   "files": [
     {
