@@ -13,6 +13,7 @@ if (typeof process.getuid === 'function' && process.getuid() === 0) {
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const uplink = require('./uplink');
 const urlModule = require('url');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -48,7 +49,7 @@ function getJson(url, timeoutMs) {
       port: parsed.port || 443,
       path: (parsed.pathname || '/') + (parsed.search || ''),
       method: 'GET',
-      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.1.7' }
+      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.1.8' }
     };
     const req = https.get(options, res => {
       let body = '';
@@ -242,6 +243,10 @@ async function update(c) {
   process.stdout.write(new Date().toISOString() + ' wrote validated native weather cache for ' + c.town + '\n');
 }
 async function main() {
+  // Use the same MGU Store lease-aware DNS resolver as BMW Speed Camera Warning.
+  // mgu-uplink writes the per-UID lease to the native Weather OAP data directory.
+  uplink.init('/var/opt/public/oap/oap_12214/data');
+  process.stdout.write(new Date().toISOString() + ' UPLINK ' + uplink.describe() + '\n');
   const c = loadConfig();
   const once = process.argv.indexOf('--once') !== -1;
   const run = async () => {
