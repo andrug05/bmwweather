@@ -6,7 +6,7 @@ on:
       version:
         description: "Release tag (for example v0.1.0)"
         required: true
-        default: "v0.1.0"
+        default: "v0.1.1"
         type: string
 
 permissions:
@@ -45,7 +45,7 @@ jobs:
           prerelease: true
           generate_release_notes: true
           body: |
-            **Experimental pre-release. Not validated on a physical BMW MGU ID7 unit.**
+            **Experimental pre-release v0.1.1. Payload mapping has been aligned against the inspected MGU ID7 Weather bundle; runtime behavior and network access still require on-device validation.**
 
             This package is a prototype bridge that fetches weather from Open-Meteo and writes a candidate payload to the native BMW Weather cache.
 
