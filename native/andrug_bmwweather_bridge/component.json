@@ -1,5 +1,5 @@
 {
-  "id": "andrug-bmwweather-bridge",
+  "id": "andrug_bmwweather_bridge",
   "kind": "tool",
   "version": "0.1.2",
   "title": "BMW Weather Bridge",
@@ -13,10 +13,10 @@
     { "path": "config.json", "from": "config.json", "mode": "0644" }
   ],
   "units": [
-    { "name": "andrug-bmwweather-bridge.service", "from": "andrug-bmwweather-bridge.service" }
+    { "name": "andrug_bmwweather_bridge.service", "from": "andrug_bmwweather_bridge.service" }
   ],
   "enable": [
-    { "unit": "andrug-bmwweather-bridge.service", "target": "multi-user.target" }
+    { "unit": "andrug_bmwweather_bridge.service", "target": "multi-user.target" }
   ],
-  "restart": ["andrug-bmwweather-bridge.service"]
+  "restart": ["andrug_bmwweather_bridge.service"]
 }
