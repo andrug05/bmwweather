@@ -1,0 +1,11 @@
+{
+  "cachePath": "/var/opt/public/oap/oap_12214/data/weatherDataCache.json",
+  "town": "Yoshkar-Ola",
+  "state": "",
+  "latitude": 56.6388,
+  "longitude": 47.8908,
+  "language": "ru",
+  "refreshMinutes": 30,
+  "requestTimeoutMs": 15000,
+  "keepBackups": 5
+}
