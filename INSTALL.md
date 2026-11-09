@@ -1,67 +1,34 @@
 # Installation on BMW MGU ID7
 
-This guide is intentionally conservative. It does not modify global networking or the native Weather OAP code.
+## MGU Store installation (recommended)
 
-## 1. Copy the module
+The repository contains `mgu-repo.json` and a native tool component under `native/andrug_bmwweather_bridge/`.
 
-Copy this repository to the MGU, for example:
+1. In MGU Store, open **Settings → Add source**.
+2. Enter `andrug05/bmwweather`.
+3. Select **Branch → main**.
+4. Open **BMW Weather Bridge** and select **Install**.
 
-```sh
-mkdir -p /var/opt/public/bmwweather
-# transfer repository files into this directory
-```
+The component installs and enables `andrug-bmwweather-bridge.service`. It runs as UID `12214`, which is also the UID declared for internet access through `mgu-uplink`. The bundled configuration uses Yoshkar-Ola coordinates. To use another city, change `native/andrug_bmwweather_bridge/config.json` in your own fork before adding that fork as a source.
 
-Check the Node runtime first:
+**Important:** installation enables the service, which periodically writes the native Weather cache. It creates a timestamped backup before replacing an existing cache file. The native app's acceptance of the generated data is still experimental and must be checked on the car.
 
-```sh
-node --version
-id
-```
+## Manual test / diagnostics
 
-## 2. Configure the location
-
-```sh
-cd /var/opt/public/bmwweather
-cp config.example.json config.json
-vi config.json
-```
-
-Set `town`, `latitude`, and `longitude` to the location that the native Weather app should display. Configure language and refresh interval as needed.
-
-## 3. Verify network access under the service UID
-
-Do not run the service as root for the final setup. Choose a dedicated UID only after checking the existing MGU account and mgu-uplink policy. Confirm DNS and HTTPS access to `api.open-meteo.com:443` under that UID. The service itself does not add routing rules or change DNS.
-
-The exact UID integration is device-specific. The `mgu-uplink` UID allow-list must be configured by the MGU owner/operator, then verified with read-only route and HTTPS tests. Do not overwrite existing UID or app policy files.
-
-## 4. Run a one-shot test
+The manual script remains available at `src/bridge.js`. Copy `config.example.json` to `config.json`, set the location and run:
 
 ```sh
 node src/bridge.js --once
 ```
 
-Before the first run, back up the native cache:
+Before a manual test, back up the native cache:
 
 ```sh
 cp -p /var/opt/public/oap/oap_12214/data/weatherDataCache.json /var/opt/public/oap/oap_12214/data/weatherDataCache.json.manual-backup
 ```
 
-Review the generated JSON. If the native app does not show the forecast, restore the backup and inspect the exact OAP 4.10.49 model/cache schema before trying again.
-
-## 5. Enable periodic execution
-
-Only after the one-shot output and native app behavior are verified, configure the platform's supported init/supervisor mechanism to run:
-
-```sh
-node /var/opt/public/bmwweather/src/bridge.js
-```
-
-Do not blindly install the example init script on an unknown MGU firmware. Confirm its init system and service conventions first.
+A successful file write does **not** prove the BMW Weather app accepted or displayed the record.
 
 ## Rollback
 
-Stop the bridge process, then restore the backup:
-
-```sh
-cp -p /var/opt/public/oap/oap_12214/data/weatherDataCache.json.manual-backup /var/opt/public/oap/oap_12214/data/weatherDataCache.json
-```
+Remove **BMW Weather Bridge** from MGU Store. If the native Weather app does not display the forecast, restore the cache backup created before the first bridge write. Do not remove or modify the native Weather OAP application.
