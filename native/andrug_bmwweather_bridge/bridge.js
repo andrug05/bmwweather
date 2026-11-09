@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
-// Older MGU systemd cannot resolve a numeric-only service account.
-// Start as root, then immediately drop to the native Weather OAP UID/GID.
+// Start as root, then immediately drop to the dedicated bridge UID.
+// Keep GID 12214 so the service can read the uplink lease and write Weather's cache.
 if (typeof process.getuid === 'function' && process.getuid() === 0) {
   process.setgid(12214);
-  process.setuid(12214);
-} else if (typeof process.getuid === 'function' && process.getuid() !== 12214) {
-  throw new Error('BMW Weather Bridge must run as UID 12214; got ' + process.getuid());
+  process.setuid(12256);
+} else if (typeof process.getuid === 'function' && process.getuid() !== 12256) {
+  throw new Error('BMW Weather Bridge must run as UID 12256; got ' + process.getuid());
 }
 
 const fs = require('fs');
