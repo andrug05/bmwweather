@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const urlModule = require('url');
 
 const ROOT = path.resolve(__dirname, '..');
 const CONFIG_PATH = process.env.BMW_WEATHER_CONFIG || path.join(ROOT, 'config.json');
@@ -25,7 +26,22 @@ function loadConfig() {
 
 function getJson(url, timeoutMs) {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, { headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.1.1' } }, res => {
+    // This MGU runs an older Node.js runtime. Use the legacy options-object
+    // overload instead of https.get(url, options, callback), which is not
+    // supported consistently by its bundled HTTPS implementation.
+    const parsed = urlModule.parse(url);
+    if (parsed.protocol !== 'https:' || !parsed.hostname) {
+      return reject(new Error('Unsupported weather URL: ' + url));
+    }
+    const options = {
+      protocol: parsed.protocol,
+      hostname: parsed.hostname,
+      port: parsed.port || 443,
+      path: (parsed.pathname || '/') + (parsed.search || ''),
+      method: 'GET',
+      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.1.7' }
+    };
+    const req = https.get(options, res => {
       let body = '';
       res.setEncoding('utf8');
       res.on('data', chunk => {
