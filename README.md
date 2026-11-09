@@ -16,9 +16,18 @@ An independent Node.js service that downloads forecast data from Open-Meteo and 
 
 The service must be assigned a dedicated UID which is permitted by the installed `mgu-uplink` policy. Do not assume that adding a UID file alone is sufficient: verify the actual UID, routing policy and HTTPS/DNS connectivity on the target MGU. This project deliberately does not change global routes, DNS, firewall rules, or the uplink service.
 
-## Install
+## Install through MGU Store
 
-See [INSTALL.md](INSTALL.md). First copy `config.example.json` to `config.json` and set the vehicle's current town, latitude, longitude and language.
+This repository now includes an MGU Store repo-tree manifest (`mgu-repo.json`) and an ID7 tool component. In the car:
+
+1. Open **MGU Store → Settings → Add source**.
+2. Add `andrug05/bmwweather`.
+3. Choose **Branch** and select `main`.
+4. Open **BMW Weather Bridge** and choose **Install**.
+
+The Store installs a systemd service. It runs as UID `12214`, requests internet access through `mgu-uplink`, and writes the native Weather cache. The bundled default location is Yoshkar-Ola; edit `native/andrug_bmwweather_bridge/config.json` in your own fork before adding it if you need another location. The service starts automatically after installation.
+
+For manual installation and diagnostics, see [INSTALL.md](INSTALL.md).
 
 ## Test
 
