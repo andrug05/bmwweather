@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "components": [
+    {
+      "id": "andrug_bmwweather_bridge",
+      "kind": "tool",
+      "path": "native/andrug_bmwweather_bridge"
+    }
+  ]
+}
