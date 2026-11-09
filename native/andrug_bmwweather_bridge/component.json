@@ -1,7 +1,7 @@
 {
   "id": "andrug-bmwweather-bridge",
   "kind": "tool",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "title": "BMW Weather Bridge",
   "description": "Feeds the native BMW ID7 Weather cache from Open-Meteo",
   "mguHmi": [
@@ -21,6 +21,11 @@
     {
       "path": "config.json",
       "from": "config.json",
+      "mode": "0644"
+    },
+    {
+      "path": "uplink.js",
+      "from": "uplink.js",
       "mode": "0644"
     }
   ],
