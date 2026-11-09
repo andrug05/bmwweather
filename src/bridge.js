@@ -138,6 +138,8 @@ function buildNativeEntry(c, raw) {
       temperaturemin: temp(d.temperature_2m_min[i]),
       temperature: temp(d.temperature_2m_max[i]),
       rain_probability: Number(d.precipitation_probability_max[i] || 0),
+      windspeed: wind(w, direction),
+      feelsLikeTemperature: temp(t),
       sunrise: d.sunrise[i].slice(11, 16),
       sunset: d.sunset[i].slice(11, 16)
     };
