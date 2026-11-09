@@ -1,0 +1,55 @@
+name: Publish experimental release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag (for example v0.1.0)"
+        required: true
+        default: "v0.1.0"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Validate version
+        shell: bash
+        run: |
+          if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then
+            echo "Invalid version tag"
+            exit 1
+          fi
+
+      - name: Build source archive
+        shell: bash
+        run: |
+          mkdir -p dist
+          git archive --format=zip --prefix=bmwweather-${{ inputs.version }}/ HEAD -o dist/bmwweather-${{ inputs.version }}-source.zip
+          sha256sum dist/bmwweather-${{ inputs.version }}-source.zip > dist/SHA256SUMS.txt
+
+      - name: Publish GitHub pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          target_commitish: main
+          name: BMW Weather Bridge ${{ inputs.version }}
+          prerelease: true
+          generate_release_notes: true
+          body: |
+            **Experimental pre-release. Not validated on a physical BMW MGU ID7 unit.**
+
+            This package is a prototype bridge that fetches weather from Open-Meteo and writes a candidate payload to the native BMW Weather cache.
+
+            Before installing, verify the native Weather JSON schema against the exact MGU software version and test network access under the dedicated application UID. Do not install as an always-on service until those checks pass.
+          files: |
+            dist/bmwweather-${{ inputs.version }}-source.zip
+            dist/SHA256SUMS.txt
