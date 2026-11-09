@@ -5,6 +5,8 @@ Wants=mgu-uplink.service
 
 [Service]
 Type=simple
+User=12256
+Group=12214
 WorkingDirectory=/var/opt/andrug-bmwweather-bridge/current
 Environment=BMW_WEATHER_CONFIG=/var/opt/andrug-bmwweather-bridge/current/config.json
 ExecStart=/usr/bin/node /var/opt/andrug-bmwweather-bridge/current/bridge.js
