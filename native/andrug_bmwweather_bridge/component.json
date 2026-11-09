@@ -13,10 +13,10 @@
     { "path": "config.json", "from": "config.json", "mode": "0644" }
   ],
   "units": [
-    { "name": "andrug_bmwweather_bridge.service", "from": "andrug_bmwweather_bridge.service" }
+    { "name": "andrug-bmwweather-bridge.service", "from": "andrug-bmwweather-bridge.service" }
   ],
   "enable": [
-    { "unit": "andrug_bmwweather_bridge.service", "target": "multi-user.target" }
+    { "unit": "andrug-bmwweather-bridge.service", "target": "multi-user.target" }
   ],
-  "restart": ["andrug_bmwweather_bridge.service"]
+  "restart": ["andrug-bmwweather-bridge.service"]
 }
