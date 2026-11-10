@@ -49,7 +49,7 @@ function getJson(url, timeoutMs) {
       port: parsed.port || 443,
       path: (parsed.pathname || '/') + (parsed.search || ''),
       method: 'GET',
-      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.2.0 https://github.com/andrug05/bmwweather/issues' }
+      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.2.1 https://github.com/andrug05/bmwweather/issues' }
     };
     const req = https.get(options, res => {
       let body = '';
