@@ -57,4 +57,4 @@ jobs:
             -A "BMWWeatherDiagnostics/0.1.0 https://github.com/andrug05/bmwweather/issues" \
             "https://wttr.in/Yoshkar-Ola?format=j1&lang=ru" \
             -o /tmp/wttr-weather.json
-          node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/met-weather.json','utf8')); if (!x.properties || !Array.isArray(x.properties.timeseries) || !x.properties.timeseries.length) process.exit(1); console.log('MET Norway forecast OK:', x.properties.timeseries.length, 'time steps')"
+          node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/wttr-weather.json','utf8')); if (!Array.isArray(x.weather) || !x.weather.length || !Array.isArray(x.current_condition) || !x.current_condition.length) process.exit(1); console.log('wttr.in forecast OK:', x.weather.length, 'days')"
