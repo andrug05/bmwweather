@@ -34,6 +34,17 @@ The diagnostics check:
 
 No root access is required for normal use. If the shared OAP data directory itself is inaccessible, the tool reports the failure in its service log; it does not attempt privilege escalation.
 
+## BMW Weather Diagnostics — graphical app
+
+A separate RHMI application for MGU ID7 is built from the MGU App Kit. It appears as **BMW Weather Diagnostics** in the app list and displays Bridge, Uplink, DNS, MET Norway HTTPS, native cache and cache-permission results.
+
+1. Install the background **BMW Weather Diagnostics** tool from the `main` source (version 0.1.1 or newer).
+2. Download the matching `andrug_bmwweather_diagnostics@VERSION.tgz` or `.mgu` package from the repository's **Diagnostics RHMI** release.
+3. Install the app package with MGU Store's local-package installation flow.
+4. Open the app and press **Проверить**. The app sends a request to the background service; the report refreshes on screen.
+
+The app and background tool are separate packages and both are required. The RHMI app does not perform network requests itself and does not modify the Weather cache.
+
 ## Remove
 
 The two components can be installed and removed independently from MGU Store. Removing Diagnostics does not remove or change the Bridge. Removing the Bridge does not remove Diagnostics.
