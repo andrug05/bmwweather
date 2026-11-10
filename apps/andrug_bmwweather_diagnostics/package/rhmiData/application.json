@@ -5,15 +5,13 @@
     "type": "OnlineApp",
     "name": "andrug_bmwweather_diagnostics",
     "vendor": "Andrug05",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "defaultLanguage": "ru_RU",
     "uiDescriptions": [
       {
         "applicationFilePath": "./uiDescriptions/ID7/application.xml",
         "uiDescriptionFilePath": "./uiDescriptions/ID7/uiDescription.json",
-        "hmi": [
-          "ID7"
-        ]
+        "hmi": ["ID7"]
       }
     ],
     "stringBundleUuid": "2b3f31a8-98d8-4c1f-b3e4-0e38b7a2d7f1",
@@ -22,12 +20,8 @@
       {
         "stringsPath": "./variantGroups/Common/texts",
         "resourcesPath": "./variantGroups/Common/images",
-        "hmi": [
-          "ID7"
-        ],
-        "brands": [
-          "BMW"
-        ]
+        "hmi": ["ID7"],
+        "brands": ["BMW"]
       }
     ],
     "entryPoints": [
