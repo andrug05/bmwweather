@@ -135,9 +135,36 @@ function cacheCheck() {
   const payload = readJson(CACHE);
   if (!payload) return result('error', 'Cache is not readable JSON', info);
   const root = Array.isArray(payload) ? payload[0] : payload;
-  const forecasts = root && root.data && root.data.forecasts;
-  const valid = !!(root && root.timestamp && root.location && root.data && Array.isArray(forecasts));
-  return result(valid ? 'ok' : 'warning', valid ? 'Cache JSON and forecast envelope are present' : 'JSON exists but does not match the expected Weather envelope', Object.assign({}, info, { rootIsArray: Array.isArray(payload), forecastDays: Array.isArray(forecasts) ? forecasts.length : 0, timestamp: root && root.timestamp || null }));
+  const days = root && root.data && root.data.weatherList;
+  const valid = !!(root && root.timestamp && root.location && root.data && Array.isArray(days));
+  return result(valid ? 'ok' : 'warning', valid ? 'Cache JSON and native weatherList envelope are present' : 'JSON exists but does not match the expected Weather envelope', Object.assign({}, info, { rootIsArray: Array.isArray(payload), forecastDays: Array.isArray(days) ? days.length : 0, timestamp: root && root.timestamp || null }));
+}
+function effectiveAccess(st, uid, gid, required) {
+  const mode = st.mode & 0o777;
+  const bits = uid === st.uid ? ((mode >> 6) & 7) : (gid === st.gid ? ((mode >> 3) & 7) : (mode & 7));
+  return (bits & required) === required;
+}
+function bridgeCacheWriteCheck() {
+  try {
+    const dir = fs.statSync(DATA);
+    const dirOK = effectiveAccess(dir, 12256, 12214, 3);
+    let fileOK = true, fileInfo = null;
+    try {
+      const file = fs.statSync(CACHE);
+      fileInfo = { uid: file.uid, gid: file.gid, mode: (file.mode & 0o777).toString(8) };
+      fileOK = effectiveAccess(file, 12256, 12214, 2);
+    } catch (e) {
+      if (e.code !== 'ENOENT') throw e;
+    }
+    const ok = dirOK && fileOK;
+    return result(ok ? 'ok' : 'error', ok ? 'Filesystem mode bits appear to allow Bridge UID 12256 / GID 12214 to replace the cache' : 'Filesystem mode bits deny Bridge UID 12256 / GID 12214 write access to the cache path', {
+      directory: { uid: dir.uid, gid: dir.gid, mode: (dir.mode & 0o777).toString(8), bridgeWriteExecute: dirOK },
+      cache: fileInfo,
+      bridgeCanWriteExistingCache: fileOK
+    });
+  } catch (e) {
+    return result('error', 'Cannot inspect cache directory permissions', { error: e.code || e.message });
+  }
 }
 function bridgeCheck() {
   const p = processInfo();
@@ -177,6 +204,7 @@ async function run() {
   checks.metNorway = result(api.ok && api.timeseries > 0 ? 'ok' : 'error',
     api.ok && api.timeseries > 0 ? 'MET Norway returned a forecast' : 'MET Norway request or forecast validation failed', api);
   checks.cache = cacheCheck();
+  checks.cacheWritePermission = bridgeCacheWriteCheck();
   checks.bridgeDiagnostics = (function () {
     const f = path.join(DATA, 'bmwweather-diagnostics.json');
     const d = readJson(f);
