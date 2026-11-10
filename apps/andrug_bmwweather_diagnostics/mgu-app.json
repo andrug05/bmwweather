@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "andrug_bmwweather_diagnostics",
+  "version": "0.2.0",
+  "tree": "package",
+  "modules": [
+    "src/diagnostics.js"
+  ],
+  "sdk": [
+    "oap-sdk/src/core/OnlineApp.js",
+    "oap-sdk/src/logging/logging",
+    "oap-sdk/src/someip/someipBuilders"
+  ]
+}
