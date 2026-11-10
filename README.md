@@ -1,41 +1,36 @@
-# BMW Weather Bridge (MGU ID7)
+# BMW Weather Bridge and Diagnostics (MGU ID7)
 
-An independent Node.js service that fetches global weather forecasts from MET Norway Locationforecast and writes a BMW Weather-compatible cache file for the native MGU Weather OAP.
+This repository provides two independent MGU Store tools for BMW MGU ID7:
 
-> **Experimental / not yet validated on a vehicle.** The native app's cache format is inferred from the installed OAP bundle. Back up the cache and verify the deserialized model before enabling the service on a car.
+- **BMW Weather Bridge** fetches global forecasts from MET Norway Locationforecast and writes a candidate BMW Weather cache.
+- **BMW Weather Diagnostics** independently checks the Bridge, MGU Store uplink, DNS, MET Norway HTTPS, and the native Weather cache. It writes a plain-text and JSON report without changing the Weather cache.
 
-## What it does
-
-- Uses HTTPS to MET Norway Locationforecast 2.0 (no API key and no npm dependencies).
-- Converts MET Norway's GeoJSON-style time series into the forecast structure expected by the BMW Weather cache.
-- Runs as a separate process; it does not patch `bundle.js` or replace the native app.
-- Writes `/var/opt/public/oap/oap_12214/data/weatherDataCache.json` using a temporary file and atomic rename.
-- Preserves the current cache as a timestamped backup before replacing it.
-- Can run once for a manual test or periodically as a daemon.
-
-## Network access on MGU
-
-The service must be assigned a dedicated UID which is permitted by the installed `mgu-uplink` policy. The component declares UID `12256` and requests internet access through MGU Store. Verify the actual UID, routing policy and HTTPS/DNS connectivity on the target MGU. This project does not change global routes, DNS, firewall rules, or the uplink service.
+> **Experimental / not yet validated on a vehicle.** A successful network request or cache write does not prove the native BMW Weather app accepted or displayed the forecast.
 
 ## Install through MGU Store
 
 1. Open **MGU Store → Settings → Add source**.
 2. Add `andrug05/bmwweather`.
-3. Choose **Branch** and select `main`.
-4. Open **BMW Weather Bridge** and choose **Install**.
+3. Select branch `main` and refresh the source.
+4. Install **BMW Weather Bridge** to provide weather data.
+5. Install **BMW Weather Diagnostics** separately when troubleshooting is needed.
 
-The bundled default location is Yoshkar-Ola. The configured UTC offset is +03:00. Change `native/andrug_bmwweather_bridge/config.json` in your own fork if you need another location/time zone.
+The Bridge runs under UID 12256. Diagnostics runs under UID 12257. Both declare their own MGU Store internet permission and do not change global routes, DNS, firewall rules or the uplink service.
+
+## Diagnostics reports
+
+Diagnostics checks whether the Bridge process is present, whether the app-specific uplink lease exists, whether MET Norway resolves and responds over HTTPS, and whether the native Weather cache is readable JSON with the expected envelope. It also checks for the Bridge's own report.
+
+It writes:
+- `/var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.txt` — compact, copy-friendly summary.
+- `/var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.json` — detailed machine-readable report.
+
+Local checks run every five minutes. MET Norway forecast requests are limited to at most one per three hours per diagnostic service lifetime. The tool never modifies the Weather cache or restarts the Bridge.
 
 ## Data source and request policy
 
-Weather data is provided by [MET Norway Locationforecast 2.0](https://api.met.no/weatherapi/locationforecast/2.0/documentation), with global coverage and forecasts up to nine days. MET Norway requires a descriptive User-Agent with genuine contact information; the bridge identifies the project through its public GitHub issues page. For locations outside the Nordic region, the service data is updated every six hours and identical requests should not be repeated more often than every three hours, so the default refresh interval is 180 minutes.
+The Bridge uses MET Norway Locationforecast 2.0. No API key is required. The provider requires a descriptive User-Agent. The Bridge refresh interval is 180 minutes. Attribution: **Weather data from MET Norway** (CC BY 4.0).
 
-MET Norway data is licensed under CC BY 4.0. Attribution: **Weather data from MET Norway**. See the provider's terms and data policy before redistribution.
+## Compatibility
 
-## Test
-
-After installation, inspect the service log and cache on the MGU. A successful file write does **not** prove the BMW Weather app accepted or displayed the record.
-
-## Important compatibility note
-
-The bridge serializes the native cache envelope (`timestamp`, `localWeather`, `languageOfRequest`, `destWeather`, `location`, `data`). The exact nested forecast schema and cache acceptance rules can vary by OAP build. The initial mapping is based on reverse-engineering notes for Weather OAP 4.10.49 and must be checked against the target car's `bundle.js`.
+The Bridge serializes a candidate native cache envelope based on reverse-engineering notes for Weather OAP 4.10.49. The nested forecast schema and cache acceptance rules can vary by OAP build and must be checked on the target car.
