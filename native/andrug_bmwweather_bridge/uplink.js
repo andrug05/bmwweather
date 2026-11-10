@@ -42,6 +42,7 @@ function readJson(file) {
 function getOwnLease() {
     return appDataDir ? readJson(path.join(appDataDir, 'uplink.json')) : null;
 }
+function getSystemLease() { return readJson(SYSTEM_LEASE); }
 
 /** Any lease (own first, then the system-wide one), memoised for 2 s. */
 function getLease() {
@@ -199,8 +200,8 @@ function isOnlineSync() {
 function describe() {
     const own = getOwnLease();
     if (own && own.ip) return 'lease ' + own.ip + ' via ' + (own.interface || '?') + ' router ' + own.router + '; dns ' + getActiveDnsServers().join(',');
-    const sys = readJson(SYSTEM_LEASE);
+    const sys = getSystemLease();
     return 'no lease in ' + appDataDir + ' (' + (sys && sys.ip ? 'uplink is online but this app is not routed: is it in apps.d?' : 'uplink offline or not installed') + '); dns ' + getActiveDnsServers().join(',');
 }
 
-module.exports = { init, checkInternet, isOnlineSync, getLease, getActiveDnsServers, describe, dnsCache: cache, _patchedLookup: patchedLookup };
+module.exports = { init, checkInternet, isOnlineSync, getLease, getOwnLease, getSystemLease, getActiveDnsServers, describe, dnsCache: cache, _patchedLookup: patchedLookup };
