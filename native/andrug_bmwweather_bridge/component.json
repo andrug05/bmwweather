@@ -1,9 +1,9 @@
 {
   "id": "andrug-bmwweather-bridge",
   "kind": "tool",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "title": "BMW Weather Bridge",
-  "description": "Feeds the native BMW ID7 Weather cache from MET Norway Locationforecast",
+  "description": "Feeds the native BMW ID7 Weather cache from wttr.in using BMWCamInfo MGU uplink DNS",
   "mguHmi": [
     "ID7"
   ],
