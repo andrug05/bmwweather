@@ -132,7 +132,7 @@ class BmwWeatherDiagnostics extends OnlineApp {
       this._setText('bridge', 'Bridge: ожидает диагностику');
       this._setText('uplink', 'Uplink: —');
       this._setText('dns', 'DNS: —');
-      this._setText('metNorway', 'MET Norway: —');
+      this._setText('metNorway', 'wttr.in: —');
       this._setText('cache', 'Кэш BMW Weather: —');
       this._setText('permissions', 'Права записи: —');
       this._setText('updated', 'Нажмите «Проверить» для запуска');
@@ -145,7 +145,7 @@ class BmwWeatherDiagnostics extends OnlineApp {
     this._setText('bridge', line('bridge', 'Bridge'));
     this._setText('uplink', line('uplink', 'MGU Uplink'));
     this._setText('dns', line('dns', 'DNS'));
-    this._setText('metNorway', line('metNorway', 'MET Norway'));
+    this._setText('metNorway', line('metNorway', 'wttr.in'));
     this._setText('cache', line('cache', 'Кэш погоды'));
     this._setText('permissions', line('cacheWritePermission', 'Права записи'));
     this._setText('updated', 'Проверено: ' + (report.checkedAt || '—'));
