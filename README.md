@@ -27,6 +27,10 @@ It writes:
 
 Local checks run every five minutes. MET Norway forecast requests are limited to at most one per three hours per diagnostic service lifetime. The tool never modifies the Weather cache or restarts the Bridge.
 
+## Graphical Diagnostics app
+
+The repository also builds a standalone RHMI application for MGU ID7. It displays each diagnostic result on the iDrive screen and can request a fresh run from the background Diagnostics service. Install the background tool first, then install the matching `.tgz` or `.mgu` from the **Diagnostics RHMI** GitHub Release. Both packages are required.
+
 ## Data source and request policy
 
 The Bridge uses MET Norway Locationforecast 2.0. No API key is required. The provider requires a descriptive User-Agent. The Bridge refresh interval is 180 minutes. Attribution: **Weather data from MET Norway** (CC BY 4.0).
