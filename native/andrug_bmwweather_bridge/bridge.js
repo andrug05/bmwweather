@@ -235,7 +235,7 @@ function metSymbolCode(symbol) {
   if (/^lightrain/.test(s)) return 61;
   if (/^rain/.test(s)) return 63;
   if (/^heavysnowshowers/.test(s)) return 86;
-  if (/^snowshowers/.test(s)) return 85;
+  if (/^(snowshowers|lightsnowshowers)/.test(s)) return 85;
   if (/^lightsnow/.test(s)) return 71;
   if (/^heavysnow/.test(s)) return 75;
   if (/^snow/.test(s)) return 73;
