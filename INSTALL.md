@@ -9,7 +9,7 @@
 
 ## BMW Weather Bridge
 
-Install **BMW Weather Bridge** to fetch MET Norway forecasts and write the candidate native BMW Weather cache. It runs as UID 12256 and uses MGU Store's `mgu-uplink`.
+Install **BMW Weather Bridge** to fetch wttr.in forecasts and write the candidate native BMW Weather cache. It runs as UID 12256 / GID 12214 and uses the same MGU Store uplink DNS model as [BMWCamInfo](https://github.com/andrug05/bmwcaminfo). The bridge initializes `uplink.js` before making ordinary HTTPS requests and does not depend on the separate `aurelm-weather-net` socket service.
 
 ## BMW Weather Diagnostics — background tool
 
@@ -21,7 +21,7 @@ It writes:
 /var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.json
 ```
 
-The text report gives a compact status per check; the JSON contains details. Local checks run every five minutes. MET Norway forecast requests are limited to once every three hours during one service lifetime.
+The text report gives a compact status per check; the JSON contains details. Local checks run every five minutes. Weather requests use the configured Bridge refresh interval (180 minutes by default).
 
 ## BMW Weather Diagnostics — graphical app
 
