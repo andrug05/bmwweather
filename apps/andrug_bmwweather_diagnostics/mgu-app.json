@@ -1,8 +1,9 @@
 {
   "schema": 1,
   "id": "andrug_bmwweather_diagnostics",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "tree": "package",
+  "mguHmi": ["ID7"],
   "modules": [
     "src/diagnostics.js"
   ],

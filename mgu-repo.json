@@ -16,9 +16,9 @@
       "kind": "app",
       "path": "apps/andrug_bmwweather_diagnostics",
       "build": "unit",
-      "mguHmi": [
-        "ID7"
-      ]
+      "title": "BMW Weather Diagnostics",
+      "description": "Экранная диагностика Weather Bridge, MGU Uplink, DNS и кэша погоды для iDrive 7.",
+      "mguHmi": ["ID7"]
     }
   ]
 }
