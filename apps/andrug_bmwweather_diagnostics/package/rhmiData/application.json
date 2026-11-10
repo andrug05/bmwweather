@@ -5,7 +5,7 @@
     "type": "OnlineApp",
     "name": "andrug_bmwweather_diagnostics",
     "vendor": "Andrug05",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "defaultLanguage": "ru_RU",
     "uiDescriptions": [
       {
@@ -29,18 +29,18 @@
         "name": "andrug_bmwweather_diagnostics",
         "uuid": "e6a23f5b-1b0e-4f32-9c67-34f2d5a3c801",
         "textId": "SID_BWDI_TITLE",
-        "insertionStateId": 20975,
+        "icon": "andrug_bmwweather_diagnostics_icon.png",
+        "insertionStateId": 20974,
         "insertionFocusId": 2,
         "insertionMode": "INSERT_BELOW",
-        "insertionOrder": 0,
+        "insertionOrder": 1,
         "insertionPriority": 0,
         "previewType": "NONE",
         "bookmarkable": true,
         "private": null,
         "appearance": "DEFAULT",
         "isGroupHeader": false,
-        "insertionGroup": 0,
-        "icon": "andrug_bmwweather_diagnostics_icon.png"
+        "insertionGroup": 0
       }
     ]
   }

@@ -1,6 +1,6 @@
 {
   "name": "andrug_bmwweather_diagnostics",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "On-screen BMW Weather Bridge and MGU network diagnostics for iDrive 7",
   "private": false,
   "main": "javascript/runner.js",
