@@ -51,10 +51,10 @@ jobs:
           if (!repo.components.some(x => x.id === 'andrug_bmwweather_diagnostics' && x.kind === 'app' && x.build === 'unit')) throw new Error('Native RHMI app missing from repo tree');
           console.log('JSON manifests and MGU repo tree OK');
           NODE
-      - name: Probe MET Norway API
+      - name: Probe wttr.in API
         run: |
           curl --fail --silent --show-error \
             -A "BMWWeatherDiagnostics/0.1.0 https://github.com/andrug05/bmwweather/issues" \
-            "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=56.6388&lon=47.8908" \
-            -o /tmp/met-weather.json
+            "https://wttr.in/Yoshkar-Ola?format=j1&lang=ru" \
+            -o /tmp/wttr-weather.json
           node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/met-weather.json','utf8')); if (!x.properties || !Array.isArray(x.properties.timeseries) || !x.properties.timeseries.length) process.exit(1); console.log('MET Norway forecast OK:', x.properties.timeseries.length, 'time steps')"
