@@ -27,7 +27,7 @@ function truth(value) {
 }
 function oneLine(value, max) {
   return String(value === undefined || value === null ? '—' : value)
-    .replace(/[\\r\\n]+/g, ' ').slice(0, max || 96);
+    .replace(/[\r\n]+/g, ' ').slice(0, max || 96);
 }
 
 class BmwWeatherDiagnostics extends OnlineApp {
