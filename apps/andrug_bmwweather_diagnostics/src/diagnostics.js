@@ -170,4 +170,9 @@ class BmwWeatherDiagnostics extends OnlineApp {
   }
 }
 
+const app = new BmwWeatherDiagnostics();
+app.start().catch(err => {
+  logger.error('Diagnostics failed to start: ' + (err.stack || err.message));
+});
+
 module.exports = BmwWeatherDiagnostics;
