@@ -1,4 +1,4 @@
-name: Validate BMW Weather Bridge
+name: Validate BMW Weather components
 
 on:
   push:
@@ -23,15 +23,30 @@ jobs:
         run: |
           node --check native/andrug_bmwweather_bridge/bridge.js
           node --check native/andrug_bmwweather_bridge/uplink.js
+          node --check native/andrug_bmwweather_diagnostics/diagnostics.js
           grep -q "bmwweather-diagnostics.json" native/andrug_bmwweather_bridge/bridge.js
-          echo "Diagnostics instrumentation present"
+          grep -q "bmwweather-diagnostics.txt" native/andrug_bmwweather_diagnostics/diagnostics.js
+          echo "Bridge and standalone diagnostics syntax OK"
+      - name: Validate JSON manifests
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const files = [
+            'native/andrug_bmwweather_bridge/component.json',
+            'native/andrug_bmwweather_bridge/config.json',
+            'native/andrug_bmwweather_diagnostics/component.json',
+            'config.example.json',
+            'mgu-repo.json'
+          ];
+          for (const file of files) JSON.parse(fs.readFileSync(file, 'utf8'));
+          const repo = JSON.parse(fs.readFileSync('mgu-repo.json', 'utf8'));
+          if (!repo.components.some(x => x.id === 'andrug-bmwweather-diagnostics')) throw new Error('Diagnostics component missing from catalog');
+          console.log('JSON manifests and MGU catalog OK');
+          NODE
       - name: Probe MET Norway API
         run: |
           curl --fail --silent --show-error \
-            -A "BMWWeatherBridge/0.2.2 https://github.com/andrug05/bmwweather/issues" \
+            -A "BMWWeatherDiagnostics/0.1.0 https://github.com/andrug05/bmwweather/issues" \
             "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=56.6388&lon=47.8908" \
             -o /tmp/met-weather.json
           node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/met-weather.json','utf8')); if (!x.properties || !Array.isArray(x.properties.timeseries) || !x.properties.timeseries.length) process.exit(1); console.log('MET Norway forecast OK:', x.properties.timeseries.length, 'time steps')"
-      - name: Validate JSON manifests
-        run: |
-          node -e "for (const f of ['native/andrug_bmwweather_bridge/component.json','native/andrug_bmwweather_bridge/config.json','config.example.json','mgu-repo.json']) JSON.parse(require('fs').readFileSync(f,'utf8')); console.log('JSON manifests OK')"
