@@ -1,0 +1,16 @@
+[Unit]
+Description=BMW Weather Diagnostics (standalone MGU Store tool)
+After=network.target mgu-uplink.service
+Wants=mgu-uplink.service
+
+[Service]
+Type=simple
+WorkingDirectory=/var/opt/andrug-bmwweather-diagnostics/current
+ExecStart=/usr/bin/node /var/opt/andrug-bmwweather-diagnostics/current/diagnostics.js
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
