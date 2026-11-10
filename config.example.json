@@ -7,7 +7,8 @@
   "language": "ru",
   "temperatureUnit": "celsius",
   "windSpeedUnit": "kmh",
-  "refreshMinutes": 30,
+  "refreshMinutes": 180,
   "requestTimeoutMs": 15000,
-  "keepBackups": 5
+  "keepBackups": 5,
+  "utcOffsetSeconds": 10800
 }
