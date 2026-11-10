@@ -159,7 +159,7 @@ class BmwWeatherDiagnostics extends OnlineApp {
       fs.writeFileSync(TRIGGER, JSON.stringify({
         requestedAt: new Date().toISOString(),
         source: 'mgu-store-rhmi-app'
-      }) + '\\n', { mode: 0o664 });
+      }) + '\n', { mode: 0o664 });
       try { fs.chmodSync(TRIGGER, 0o664); } catch (err) {}
       this._setText('updated', 'Запрос отправлен. Ожидание результата…');
       logger.info('Manual diagnostics request created');
