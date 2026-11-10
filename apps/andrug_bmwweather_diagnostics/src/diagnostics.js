@@ -6,7 +6,7 @@ const logging = require('oap-sdk/src/logging/logging');
 
 const logger = logging.getSDKLogger();
 const STATE = 'ST_OnlineApps_BmwWeatherDiagnostics';
-const DATA = '/var/opt/public/oap/oap_12214/data';
+const DATA = '/var/opt/public/oap/oap_12224/data';
 const REPORT = DATA + '/bmwweather-diagnostics.json';
 const TRIGGER = DATA + '/bmwweather-diagnostics.request';
 const ENTRY_UUID = 'e6a23f5b-1b0e-4f32-9c67-34f2d5a3c801';
