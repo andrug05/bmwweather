@@ -228,10 +228,10 @@ function metSymbolCode(symbol) {
   if (/^lightrainandthunder$/.test(s)) return 95;
   if (/^(rain|heavyrain)andthunder$/.test(s)) return 99;
   if (/^(lightsnow|snow|heavysnow)andthunder$/.test(s)) return 96;
-  if (/^heavyrain/.test(s)) return 65;
-  if (/^rainshowers/.test(s)) return 81;
   if (/^heavyrainshowers/.test(s)) return 82;
+  if (/^rainshowers/.test(s)) return 81;
   if (/^lightrainshowers/.test(s)) return 80;
+  if (/^heavyrain/.test(s)) return 65;
   if (/^lightrain/.test(s)) return 61;
   if (/^rain/.test(s)) return 63;
   if (/^heavysnowshowers/.test(s)) return 86;
