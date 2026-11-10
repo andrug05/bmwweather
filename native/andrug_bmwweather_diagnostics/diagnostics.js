@@ -17,8 +17,8 @@ const BRIDGE_DIR = '/var/opt/andrug-bmwweather-bridge/current';
 const BRIDGE_UNIT = 'andrug-bmwweather-bridge.service';
 const OWN_LEASE = path.join(WEATHER_DATA, 'uplink.json');
 const SYSTEM_LEASE = '/run/mgu-uplink/lease.json';
-const API = 'api.met.no';
-const API_PATH = '/weatherapi/locationforecast/2.0/compact?lat=56.6388&lon=47.8908';
+const API = 'wttr.in';
+const API_PATH = '/Yoshkar-Ola?format=j1&lang=ru';
 const USER_AGENT = 'BMWWeatherDiagnostics/0.1.0 https://github.com/andrug05/bmwweather/issues';
 const API_MIN_INTERVAL = 3 * 60 * 60 * 1000;
 const LOOP_INTERVAL = 5 * 60 * 1000;
@@ -114,7 +114,7 @@ function httpsGet(host, requestPath, servers, timeout) {
       res.on('end', () => {
         let parsed = null;
         try { parsed = JSON.parse(body); } catch (e) {}
-        finish({ ok: res.statusCode >= 200 && res.statusCode < 300, httpStatus: res.statusCode, bytes: body.length, validJson: !!parsed, timeseries: parsed && parsed.properties && Array.isArray(parsed.properties.timeseries) ? parsed.properties.timeseries.length : 0, error: res.statusCode >= 400 ? ('HTTP ' + res.statusCode) : undefined });
+        finish({ ok: res.statusCode >= 200 && res.statusCode < 300, httpStatus: res.statusCode, bytes: body.length, validJson: !!parsed, weatherDays: parsed && Array.isArray(parsed.weather) ? parsed.weather.length : 0, error: res.statusCode >= 400 ? ('HTTP ' + res.statusCode) : undefined });
       });
     });
     req.on('error', e => finish({ ok: false, error: e.code || e.message }));
@@ -202,7 +202,7 @@ async function runOnce() {
     lease.ownLease ? 'App-specific uplink lease is present' : (lease.systemLease ? 'System uplink is online, but no app-specific lease was found' : 'No active MGU uplink lease found'),
     { leaseSource: lease.leaseSource, dnsServers: lease.servers });
   const dnsResult = await resolveHost(API, lease.servers);
-  checks.dns = result(dnsResult.ok ? 'ok' : 'error', dnsResult.ok ? 'MET Norway hostname resolved' : 'MET Norway DNS lookup failed', dnsResult);
+  checks.dns = result(dnsResult.ok ? 'ok' : 'error', dnsResult.ok ? 'wttr.in hostname resolved' : 'wttr.in DNS lookup failed', dnsResult);
   const api = await checkApi(lease.servers);
   checks.metNorway = result(api.ok && api.timeseries > 0 ? 'ok' : 'error',
     api.ok && api.timeseries > 0 ? 'MET Norway returned a forecast' : 'MET Norway request or forecast validation failed', api);
