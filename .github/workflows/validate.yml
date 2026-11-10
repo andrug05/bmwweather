@@ -24,6 +24,7 @@ jobs:
           node --check native/andrug_bmwweather_bridge/bridge.js
           node --check native/andrug_bmwweather_bridge/uplink.js
           node --check native/andrug_bmwweather_diagnostics/diagnostics.js
+          node --check apps/andrug_bmwweather_diagnostics/main.js
           grep -q "bmwweather-diagnostics.json" native/andrug_bmwweather_bridge/bridge.js
           grep -q "bmwweather-diagnostics.txt" native/andrug_bmwweather_diagnostics/diagnostics.js
           echo "Bridge and standalone diagnostics syntax OK"
@@ -35,6 +36,7 @@ jobs:
             'native/andrug_bmwweather_bridge/component.json',
             'native/andrug_bmwweather_bridge/config.json',
             'native/andrug_bmwweather_diagnostics/component.json',
+            'apps/andrug_bmwweather_diagnostics/app.json',
             'config.example.json',
             'mgu-repo.json'
           ];
