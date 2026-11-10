@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.3.0",
+  "containers": {
+    "1": {
+      "type": "state",
+      "name": "ST_OnlineApps_BmwWeatherDiagnostics",
+      "components": {
+        "10": {
+          "type": "title",
+          "name": "diagTitle",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}},
+          "rows": [{"Text": {"value": "SID_BWDI_TITLE", "type": "StringId"}}]
+        },
+        "20": {
+          "type": "label",
+          "name": "diagOverall",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 0, "type": "UInt"}},
+          "rows": [{"Text": {"value": "Ожидание отчёта", "type": "Text"}}]
+        },
+        "21": {
+          "type": "label",
+          "name": "diagBridge",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 0, "type": "UInt"}},
+          "rows": [{"Text": {"value": "Bridge: —", "type": "Text"}}]
+        },
+        "22": {
+          "type": "label",
+          "name": "diagUplink",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 0, "type": "UInt"}},
+          "rows": [{"Text": {"value": "MGU Uplink: —", "type": "Text"}}]
+        },
+        "23": {
+          "type": "label",
+          "name": "diagDns",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 0, "type": "UInt"}},
+          "rows": [{"Text": {"value": "DNS: —", "type": "Text"}}]
+        },
+        "24": {
+          "type": "label",
+          "name": "diagMet",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 0, "type": "UInt"}},
+          "rows": [{"Text": {"value": "MET Norway: —", "type": "Text"}}]
+        },
+        "25": {
+          "type": "label",
+          "name": "diagCache",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 0, "type": "UInt"}},
+          "rows": [{"Text": {"value": "Кэш BMW Weather: —", "type": "Text"}}]
+        },
+        "26": {
+          "type": "label",
+          "name": "diagPermissions",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 0, "type": "UInt"}},
+          "rows": [{"Text": {"value": "Права записи: —", "type": "Text"}}]
+        },
+        "27": {
+          "type": "label",
+          "name": "diagUpdated",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 0, "type": "UInt"}},
+          "rows": [{"Text": {"value": "Нажмите «Проверить»", "type": "Text"}}]
+        },
+        "32": {
+          "type": "button",
+          "name": "diagRun",
+          "properties": {"Visible": {"value": 1, "type": "UInt"}, "Focusable": {"value": 3, "type": "UInt"}},
+          "rows": [{"Text": {"value": "Проверить", "type": "Text"}}]
+        }
+      }
+    }
+  }
+}
