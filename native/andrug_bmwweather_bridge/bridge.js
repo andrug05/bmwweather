@@ -13,12 +13,34 @@ if (typeof process.getuid === 'function' && process.getuid() === 0) {
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const dns = require('dns');
 const uplink = require('./uplink');
 const urlModule = require('url');
 
 const ROOT = path.resolve(__dirname, '..');
 const CONFIG_PATH = process.env.BMW_WEATHER_CONFIG || path.join(ROOT, 'config.json');
-const DEFAULT_CACHE = '/var/opt/public/oap/oap_12214/data/weatherDataCache.json';
+const DATA_DIR = '/var/opt/public/oap/oap_12214/data';
+const DEFAULT_CACHE = path.join(DATA_DIR, 'weatherDataCache.json');
+const DIAGNOSTICS_PATH = path.join(DATA_DIR, 'bmwweather-diagnostics.json');
+const diagnostics = { component: 'BMW Weather Bridge', version: '0.2.2', startedAt: new Date().toISOString(), updatedAt: null, overall: 'starting', stages: {}, lastError: null, lastSuccess: null };
+function stage(name, status, details) {
+  diagnostics.stages[name] = Object.assign({ status: status, at: new Date().toISOString() }, details || {});
+  diagnostics.updatedAt = new Date().toISOString();
+  writeDiagnostics();
+  process.stdout.write('DIAG ' + name + ' ' + status + (details && details.message ? ' ' + details.message : '') + '\\n');
+}
+function writeDiagnostics() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) return;
+    const tmp = DIAGNOSTICS_PATH + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(diagnostics, null, 2), { mode: 0o644 });
+    fs.renameSync(tmp, DIAGNOSTICS_PATH);
+    try { fs.chmodSync(DIAGNOSTICS_PATH, 0o644); } catch (_) {}
+  } catch (e) {
+    process.stderr.write('DIAG_WRITE_ERROR ' + e.message + '\\n');
+  }
+}
+function safeError(e) { return String(e && (e.stack || e.message) || e).slice(0, 1800); }
 
 function loadConfig() {
   const c = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
@@ -320,10 +342,31 @@ function buildMetRaw(payload, c) {
 }
 
 async function update(c) {
+  diagnostics.overall = 'running';
+  diagnostics.lastError = null;
+  stage('config', 'ok', { town: c.town, latitude: Number(c.latitude), longitude: Number(c.longitude), refreshMinutes: c.refreshMinutes });
+  try {
+    const st = fs.statSync(DATA_DIR);
+    fs.accessSync(DATA_DIR, fs.constants.W_OK);
+    stage('cache_directory', 'ok', { writable: true, mode: (st.mode & 0o777).toString(8) });
+  } catch (e) { stage('cache_directory', 'error', { message: safeError(e) }); throw e; }
+  const ownLease = uplink.getOwnLease ? uplink.getOwnLease() : null;
+  const systemLease = uplink.getSystemLease ? uplink.getSystemLease() : null;
+  stage('mgu_uplink', ownLease && ownLease.ip ? 'ok' : 'error', { appLeasePresent: !!(ownLease && ownLease.ip), systemLeasePresent: !!(systemLease && systemLease.ip), dnsServerCount: uplink.getActiveDnsServers().length, message: ownLease && ownLease.ip ? 'App-specific uplink lease is present' : 'No app-specific uplink lease for UID 12256' });
+  await new Promise(resolve => dns.lookup('api.met.no', (err, address) => {
+    if (err) { stage('dns', 'error', { message: safeError(err) }); return resolve(); }
+    stage('dns', 'ok', { resolved: true, addressFamily: net.isIP(address) || 0 });
+    resolve();
+  }));
   const url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=' + encodeURIComponent(Number(c.latitude).toFixed(4)) +
     '&lon=' + encodeURIComponent(Number(c.longitude).toFixed(4));
-  const response = await getJson(url, c.requestTimeoutMs);
-  const raw = buildMetRaw(response, c);
+  stage('met_norway_https', 'running', { host: 'api.met.no' });
+  let response;
+  try { response = await getJson(url, c.requestTimeoutMs); stage('met_norway_https', 'ok', { http: '2xx' }); }
+  catch (e) { stage('met_norway_https', 'error', { message: safeError(e) }); throw e; }
+  let raw;
+  try { raw = buildMetRaw(response, c); stage('forecast_parse', 'ok', { timeSteps: response.properties.timeseries.length, days: Object.keys(raw.daily.time).length }); }
+  catch (e) { stage('forecast_parse', 'error', { message: safeError(e) }); throw e; }
   const entry = {
     timestamp: new Date().toISOString(),
     localWeather: true,
