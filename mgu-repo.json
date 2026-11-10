@@ -10,6 +10,15 @@
       "id": "andrug-bmwweather-diagnostics",
       "kind": "tool",
       "path": "native/andrug_bmwweather_diagnostics"
+    },
+    {
+      "id": "andrug_bmwweather_diagnostics",
+      "kind": "app",
+      "path": "apps/andrug_bmwweather_diagnostics",
+      "build": "unit",
+      "mguHmi": [
+        "ID7"
+      ]
     }
   ]
 }
