@@ -22,7 +22,7 @@ const CONFIG_PATH = process.env.BMW_WEATHER_CONFIG || path.join(ROOT, 'config.js
 const DATA_DIR = '/var/opt/public/oap/oap_12214/data';
 const DEFAULT_CACHE = path.join(DATA_DIR, 'weatherDataCache.json');
 const DIAGNOSTICS_PATH = path.join(DATA_DIR, 'bmwweather-diagnostics.json');
-const diagnostics = { component: 'BMW Weather Bridge', version: '0.2.2', startedAt: new Date().toISOString(), updatedAt: null, overall: 'starting', stages: {}, lastError: null, lastSuccess: null };
+const diagnostics = { component: 'BMW Weather Bridge', version: '0.2.3', startedAt: new Date().toISOString(), updatedAt: null, overall: 'starting', stages: {}, lastError: null, lastSuccess: null };
 function stage(name, status, details) {
   diagnostics.stages[name] = Object.assign({ status: status, at: new Date().toISOString() }, details || {});
   diagnostics.updatedAt = new Date().toISOString();
@@ -71,7 +71,7 @@ function getJson(url, timeoutMs) {
       port: parsed.port || 443,
       path: (parsed.pathname || '/') + (parsed.search || ''),
       method: 'GET',
-      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.2.1 https://github.com/andrug05/bmwweather/issues' }
+      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.2.3 https://github.com/andrug05/bmwweather/issues' }
     };
     const req = https.get(options, res => {
       let body = '';
@@ -210,7 +210,7 @@ function buildNativeEntry(c, raw) {
       }
     });
   }
-  return { provider: 'MET Norway', language: c.language, weatherList: days, alerts: [] };
+  return { provider: 'wttr.in', language: c.language, weatherList: days, alerts: [] };
 }
 function validateNativeEntry(entry) {
   if (!entry || !entry.data || !Array.isArray(entry.data.weatherList) || entry.data.weatherList.length < 1) throw new Error('Native payload has no weatherList');
@@ -341,32 +341,144 @@ function buildMetRaw(payload, c) {
   };
 }
 
+
+function wttrCode(value) {
+  const map = {
+    113:0,116:2,119:3,122:3,143:45,176:61,179:71,182:66,185:56,
+    200:95,227:73,230:75,248:45,260:48,263:51,266:53,281:56,284:57,
+    293:61,296:61,299:63,302:63,305:65,308:65,311:66,314:67,317:66,
+    320:71,323:73,326:73,329:75,332:75,335:75,338:75,350:77,
+    353:80,356:81,359:82,362:66,365:66,368:71,371:75,374:77,377:77,
+    386:95,389:96,392:95,395:99
+  };
+  return map[Number(value)] === undefined ? 3 : map[Number(value)];
+}
+function wttrClock(value) {
+  const m = String(value || '0').match(/^(\\d{1,4})$/);
+  const n = m ? Number(m[1]) : 0;
+  const h = Math.min(23, Math.floor(n / 100));
+  return String(h).padStart(2, '0') + ':00';
+}
+function wttrRaw(payload, c) {
+  if (!payload || !Array.isArray(payload.weather) || !payload.weather.length) throw new Error('wttr.in response has no weather array');
+  const hourly = {
+    time: [], temperature_2m: [], relative_humidity_2m: [], apparent_temperature: [],
+    precipitation_probability: [], precipitation: [], weather_code: [],
+    wind_speed_10m: [], wind_direction_10m: []
+  };
+  const daily = {
+    time: [], weather_code: [], temperature_2m_mean: [], temperature_2m_min: [],
+    temperature_2m_max: [], precipitation_probability_max: [], precipitation_sum: [],
+    sunrise: [], sunset: [], wind_speed_10m_max: [], wind_direction_10m_dominant: []
+  };
+  payload.weather.slice(0, 5).forEach(day => {
+    const date = String(day.date || '');
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return;
+    const hours = Array.isArray(day.hourly) ? day.hourly : [];
+    const dayTemps = [];
+    const dayCodes = [];
+    let maxRain = 0, sumRain = 0, maxWind = 0, windDirs = [];
+    hours.forEach(h => {
+      const hour = wttrClock(h.time);
+      const t = numberOr(h.tempC, 0);
+      const code = wttrCode(h.weatherCode);
+      const windSpeed = numberOr(h.windspeedKmph, 0);
+      dayTemps.push(t); dayCodes.push(code);
+      maxRain = Math.max(maxRain, numberOr(h.chanceofrain, 0));
+      sumRain += numberOr(h.precipMM, 0);
+      maxWind = Math.max(maxWind, windSpeed);
+      windDirs.push(numberOr(h.winddirDegree, 0));
+      hourly.time.push(date + 'T' + hour + ':00');
+      hourly.temperature_2m.push(t);
+      hourly.relative_humidity_2m.push(numberOr(h.humidity, 60));
+      hourly.apparent_temperature.push(numberOr(h.FeelsLikeC, t));
+      hourly.precipitation_probability.push(numberOr(h.chanceofrain, 0));
+      hourly.precipitation.push(numberOr(h.precipMM, 0));
+      hourly.weather_code.push(code);
+      hourly.wind_speed_10m.push(windSpeed);
+      hourly.wind_direction_10m.push(numberOr(h.winddirDegree, 0));
+    });
+    const counts = {};
+    dayCodes.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+    const dominant = Object.keys(counts).sort((x,y) => counts[y] - counts[x])[0] || 3;
+    const astronomy = day.astronomy && day.astronomy[0] || {};
+    function isoClock(v) {
+      const m = String(v || '').match(/^(\\d{1,2}):(\\d{2})\\s*(AM|PM)$/i);
+      if (!m) return date + 'T06:00:00';
+      let h = Number(m[1]) % 12;
+      if (m[3].toUpperCase() === 'PM') h += 12;
+      return date + 'T' + String(h).padStart(2, '0') + ':' + m[2] + ':00';
+    }
+    daily.time.push(date);
+    daily.weather_code.push(Number(dominant));
+    daily.temperature_2m_mean.push(dayTemps.length ? dayTemps.reduce((x,y)=>x+y,0)/dayTemps.length : 0);
+    daily.temperature_2m_min.push(numberOr(day.mintempC, Math.min.apply(null, dayTemps.concat([0]))));
+    daily.temperature_2m_max.push(numberOr(day.maxtempC, Math.max.apply(null, dayTemps.concat([0]))));
+    daily.precipitation_probability_max.push(maxRain);
+    daily.precipitation_sum.push(sumRain);
+    daily.sunrise.push(isoClock(astronomy.sunrise));
+    daily.sunset.push(isoClock(astronomy.sunset));
+    daily.wind_speed_10m_max.push(maxWind);
+    daily.wind_direction_10m_dominant.push(windDirs.length ? windDirs[Math.floor(windDirs.length/2)] : 0);
+  });
+  if (!daily.time.length || !hourly.time.length) throw new Error('wttr.in response contains no usable hourly forecast');
+  const cc = payload.current_condition && payload.current_condition[0] || {};
+  return {
+    utc_offset_seconds: numberOr(c.utcOffsetSeconds, 10800),
+    hourly, daily,
+    current: {
+      temperature_2m: numberOr(cc.temp_C, 0),
+      relative_humidity_2m: numberOr(cc.humidity, 60),
+      apparent_temperature: numberOr(cc.FeelsLikeC, numberOr(cc.temp_C, 0)),
+      precipitation: numberOr(cc.precipMM, 0),
+      weather_code: wttrCode(cc.weatherCode),
+      wind_speed_10m: numberOr(cc.windspeedKmph, 0),
+      wind_direction_10m: numberOr(cc.winddirDegree, 0)
+    }
+  };
+}
+
 async function update(c) {
   diagnostics.overall = 'running';
   diagnostics.lastError = null;
-  stage('config', 'ok', { town: c.town, latitude: Number(c.latitude), longitude: Number(c.longitude), refreshMinutes: c.refreshMinutes });
+  stage('config', 'ok', { town: c.town, latitude: Number(c.latitude), longitude: Number(c.longitude), refreshMinutes: c.refreshMinutes, provider: 'wttr.in' });
   try {
     const st = fs.statSync(DATA_DIR);
     fs.accessSync(DATA_DIR, fs.constants.W_OK);
     stage('cache_directory', 'ok', { writable: true, mode: (st.mode & 0o777).toString(8) });
   } catch (e) { stage('cache_directory', 'error', { message: safeError(e) }); throw e; }
   const ownLease = uplink.getOwnLease ? uplink.getOwnLease() : null;
-  const systemLease = uplink.getSystemLease ? uplink.getSystemLease() : null;
-  stage('mgu_uplink', ownLease && ownLease.ip ? 'ok' : 'error', { appLeasePresent: !!(ownLease && ownLease.ip), systemLeasePresent: !!(systemLease && systemLease.ip), dnsServerCount: uplink.getActiveDnsServers().length, message: ownLease && ownLease.ip ? 'App-specific uplink lease is present' : 'No app-specific uplink lease for UID 12256' });
-  await new Promise(resolve => dns.lookup('api.met.no', (err, address) => {
+  const systemLease = uplink.getSystemLease ? uplink.getSystemLease() : uplink.getLease();
+  const lease = ownLease || systemLease;
+  stage('mgu_uplink', lease && lease.ip ? 'ok' : 'warning', {
+    appLeasePresent: !!(ownLease && ownLease.ip),
+    systemLeasePresent: !!(systemLease && systemLease.ip),
+    dnsServers: uplink.getActiveDnsServers(),
+    message: lease && lease.ip ? 'MGU Store uplink lease detected; using bmwcaminfo DNS resolver model' : 'No MGU uplink lease file detected; trying configured DNS fallback'
+  });
+  await new Promise(resolve => dns.lookup('wttr.in', (err, address) => {
     if (err) { stage('dns', 'error', { message: safeError(err) }); return resolve(); }
-    stage('dns', 'ok', { resolved: true, addressFamily: address.indexOf(':') >= 0 ? 6 : 4 });
+    stage('dns', 'ok', { host: 'wttr.in', resolved: true, addressFamily: address.indexOf(':') >= 0 ? 6 : 4 });
     resolve();
   }));
-  const url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=' + encodeURIComponent(Number(c.latitude).toFixed(4)) +
-    '&lon=' + encodeURIComponent(Number(c.longitude).toFixed(4));
-  stage('met_norway_https', 'running', { host: 'api.met.no' });
+  const url = 'https://wttr.in/' + encodeURIComponent(c.town) + '?format=j1&lang=' + encodeURIComponent(c.language || 'ru');
+  stage('wttr_https', 'running', { host: 'wttr.in' });
   let response;
-  try { response = await getJson(url, c.requestTimeoutMs); stage('met_norway_https', 'ok', { http: '2xx' }); }
-  catch (e) { stage('met_norway_https', 'error', { message: safeError(e) }); throw e; }
+  try {
+    response = await getJson(url, c.requestTimeoutMs);
+    stage('wttr_https', 'ok', { http: '2xx' });
+  } catch (e) {
+    stage('wttr_https', 'error', { message: safeError(e) });
+    throw e;
+  }
   let raw;
-  try { raw = buildMetRaw(response, c); stage('forecast_parse', 'ok', { timeSteps: response.properties.timeseries.length, days: Object.keys(raw.daily.time).length }); }
-  catch (e) { stage('forecast_parse', 'error', { message: safeError(e) }); throw e; }
+  try {
+    raw = wttrRaw(response, c);
+    stage('forecast_parse', 'ok', { days: raw.daily.time.length, timeSteps: raw.hourly.time.length });
+  } catch (e) {
+    stage('forecast_parse', 'error', { message: safeError(e) });
+    throw e;
+  }
   const entry = {
     timestamp: new Date().toISOString(),
     localWeather: true,
@@ -392,7 +504,7 @@ async function update(c) {
   diagnostics.lastSuccess = new Date().toISOString();
   diagnostics.lastError = null;
   writeDiagnostics();
-  process.stdout.write(new Date().toISOString() + ' wrote validated native weather cache for ' + c.town + '\n');
+  process.stdout.write(new Date().toISOString() + ' wrote validated native weather cache for ' + c.town + '\\n');
 }
 async function main() {
   // Use the same MGU Store lease-aware DNS resolver as BMW Speed Camera Warning.
