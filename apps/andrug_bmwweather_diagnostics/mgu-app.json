@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "id": "andrug_bmwweather_diagnostics",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "tree": "package",
   "mguHmi": ["ID7"],
   "modules": [
