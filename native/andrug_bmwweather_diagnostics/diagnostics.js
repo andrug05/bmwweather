@@ -6,14 +6,16 @@ const dns = require('dns');
 const https = require('https');
 const net = require('net');
 
-const DATA = '/var/opt/public/oap/oap_12214/data';
-const CACHE = path.join(DATA, 'weatherDataCache.json');
-const REPORT = path.join(DATA, 'bmwweather-diagnostics.json');
-const SUMMARY = path.join(DATA, 'bmwweather-diagnostics.txt');
-const TRIGGER = path.join(DATA, 'bmwweather-diagnostics.request');
+const WEATHER_DATA = '/var/opt/public/oap/oap_12214/data';
+const APP_DATA = '/var/opt/public/oap/oap_12224/data';
+const CACHE = path.join(WEATHER_DATA, 'weatherDataCache.json');
+const BRIDGE_REPORT = path.join(WEATHER_DATA, 'bmwweather-diagnostics.json');
+const REPORT = path.join(APP_DATA, 'bmwweather-diagnostics.json');
+const SUMMARY = path.join(APP_DATA, 'bmwweather-diagnostics.txt');
+const TRIGGER = path.join(APP_DATA, 'bmwweather-diagnostics.request');
 const BRIDGE_DIR = '/var/opt/andrug-bmwweather-bridge/current';
 const BRIDGE_UNIT = 'andrug-bmwweather-bridge.service';
-const OWN_LEASE = path.join(DATA, 'uplink.json');
+const OWN_LEASE = path.join(WEATHER_DATA, 'uplink.json');
 const SYSTEM_LEASE = '/run/mgu-uplink/lease.json';
 const API = 'api.met.no';
 const API_PATH = '/weatherapi/locationforecast/2.0/compact?lat=56.6388&lon=47.8908';
@@ -147,7 +149,7 @@ function effectiveAccess(st, uid, gid, required) {
 }
 function bridgeCacheWriteCheck() {
   try {
-    const dir = fs.statSync(DATA);
+    const dir = fs.statSync(WEATHER_DATA);
     const dirOK = effectiveAccess(dir, 12256, 12214, 3);
     let fileOK = true, fileInfo = null;
     try {
@@ -175,7 +177,7 @@ function bridgeCheck() {
 }
 function writeReport(report) {
   try {
-    if (!fs.existsSync(DATA)) throw new Error('Shared OAP data directory is missing or not accessible');
+    if (!fs.existsSync(APP_DATA)) throw new Error('Diagnostics OAP data directory is missing or not accessible');
     const tmp = REPORT + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(report, null, 2) + '\n', { mode: 0o644 });
     fs.renameSync(tmp, REPORT);
@@ -207,13 +209,13 @@ async function runOnce() {
   checks.cache = cacheCheck();
   checks.cacheWritePermission = bridgeCacheWriteCheck();
   checks.bridgeDiagnostics = (function () {
-    const f = path.join(DATA, 'bmwweather-diagnostics.json');
+    const f = BRIDGE_REPORT;
     const d = readJson(f);
     return d ? result('ok', 'Bridge diagnostic report is present', { file: f, checkedAt: d.checkedAt || d.timestamp || null, overall: d.overall || null }) : result('warning', 'Bridge diagnostic report is not present or is not valid JSON', { file: f, fileInfo: statInfo(f) });
   })();
   const statuses = Object.keys(checks).map(k => checks[k].status);
   const overall = statuses.indexOf('error') !== -1 ? 'ERROR' : (statuses.indexOf('warning') !== -1 ? 'WARNING' : 'OK');
-  const report = { application: 'BMW Weather Diagnostics', version: '0.1.0', checkedAt: new Date().toISOString(), uid: typeof process.getuid === 'function' ? process.getuid() : null, gid: typeof process.getgid === 'function' ? process.getgid() : null, overall: overall, checks: checks, output: { json: REPORT, text: SUMMARY } };
+  const report = { application: 'BMW Weather Diagnostics', version: '0.2.4', checkedAt: new Date().toISOString(), uid: typeof process.getuid === 'function' ? process.getuid() : null, gid: typeof process.getgid === 'function' ? process.getgid() : null, overall: overall, checks: checks, output: { json: REPORT, text: SUMMARY } };
   const saved = writeReport(report);
   console.log('[BMW-WEATHER-DIAG] ' + JSON.stringify({ overall: overall, saved: saved, checks: statuses }));
 }
