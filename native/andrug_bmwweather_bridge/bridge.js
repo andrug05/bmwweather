@@ -27,7 +27,7 @@ function stage(name, status, details) {
   diagnostics.stages[name] = Object.assign({ status: status, at: new Date().toISOString() }, details || {});
   diagnostics.updatedAt = new Date().toISOString();
   writeDiagnostics();
-  process.stdout.write('DIAG ' + name + ' ' + status + (details && details.message ? ' ' + details.message : '') + '\\n');
+  process.stdout.write('DIAG ' + name + ' ' + status + (details && details.message ? ' ' + details.message : '') + '\n');
 }
 function writeDiagnostics() {
   try {
@@ -355,7 +355,7 @@ async function update(c) {
   stage('mgu_uplink', ownLease && ownLease.ip ? 'ok' : 'error', { appLeasePresent: !!(ownLease && ownLease.ip), systemLeasePresent: !!(systemLease && systemLease.ip), dnsServerCount: uplink.getActiveDnsServers().length, message: ownLease && ownLease.ip ? 'App-specific uplink lease is present' : 'No app-specific uplink lease for UID 12256' });
   await new Promise(resolve => dns.lookup('api.met.no', (err, address) => {
     if (err) { stage('dns', 'error', { message: safeError(err) }); return resolve(); }
-    stage('dns', 'ok', { resolved: true, addressFamily: net.isIP(address) || 0 });
+    stage('dns', 'ok', { resolved: true, addressFamily: address.indexOf(':') >= 0 ? 6 : 4 });
     resolve();
   }));
   const url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=' + encodeURIComponent(Number(c.latitude).toFixed(4)) +
@@ -379,8 +379,19 @@ async function update(c) {
     },
     data: buildNativeEntry(c, raw)
   };
-  validateNativeEntry(entry);
-  backupAndWrite(c.cachePath, entry, c.keepBackups);
+  try { validateNativeEntry(entry); stage('native_payload', 'ok', { forecastDays: entry.data.weatherList.length }); }
+  catch (e) { stage('native_payload', 'error', { message: safeError(e) }); throw e; }
+  try {
+    backupAndWrite(c.cachePath, entry, c.keepBackups);
+    const saved = JSON.parse(fs.readFileSync(c.cachePath, 'utf8'));
+    if (!Array.isArray(saved) || !saved[0] || !saved[0].data || !Array.isArray(saved[0].data.weatherList)) throw new Error('Cache read-back validation failed');
+    const stat = fs.statSync(c.cachePath);
+    stage('cache_write', 'ok', { path: c.cachePath, bytes: stat.size, modifiedAt: stat.mtime.toISOString(), readBack: true });
+  } catch (e) { stage('cache_write', 'error', { path: c.cachePath, message: safeError(e) }); throw e; }
+  diagnostics.overall = 'ok';
+  diagnostics.lastSuccess = new Date().toISOString();
+  diagnostics.lastError = null;
+  writeDiagnostics();
   process.stdout.write(new Date().toISOString() + ' wrote validated native weather cache for ' + c.town + '\n');
 }
 async function main() {
