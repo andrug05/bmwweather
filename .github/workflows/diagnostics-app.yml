@@ -1,93 +1,52 @@
-name: Build BMW Weather Diagnostics RHMI app
+name: Validate BMW Weather Diagnostics OAP app
 
 on:
   push:
     branches: [main]
     paths:
       - 'apps/andrug_bmwweather_diagnostics/**'
+      - 'mgu-repo.json'
+      - '.github/workflows/diagnostics-app.yml'
+  pull_request:
+    paths:
+      - 'apps/andrug_bmwweather_diagnostics/**'
+      - 'mgu-repo.json'
       - '.github/workflows/diagnostics-app.yml'
   workflow_dispatch:
-    inputs:
-      version:
-        description: "RHMI app version"
-        required: true
-        default: "0.1.0"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build-release:
+  validate-oap-source:
     runs-on: ubuntu-latest
-    env:
-      APP_ID: andrug_bmwweather_diagnostics
-      APP_VERSION: ${{ inputs.version || '0.1.0' }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/checkout@v5
-        with:
-          repository: aurelmarius/bmw-games
-          path: upstream
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Prepare RHMI app source
+      - name: Validate source module
+        run: node --check apps/andrug_bmwweather_diagnostics/src/diagnostics.js
+      - name: Validate OAP metadata and RHMI description
         run: |
-          set -euo pipefail
-          mkdir -p "upstream/apps/${APP_ID}"
-          cp -a "apps/${APP_ID}/." "upstream/apps/${APP_ID}/"
           python3 - <<'PY'
-          import json, os
-          p=f"upstream/apps/{os.environ['APP_ID']}/app.json"
-          d=json.load(open(p,encoding='utf-8'))
-          d['version']=os.environ['APP_VERSION']
-          json.dump(d,open(p,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
+          import json, pathlib, xml.etree.ElementTree as ET
+          root = pathlib.Path('apps/andrug_bmwweather_diagnostics')
+          app = json.loads((root/'mgu-app.json').read_text())
+          pkg = json.loads((root/'package/package.json').read_text())
+          rhmi = json.loads((root/'package/rhmiData/application.json').read_text())
+          ui = json.loads((root/'package/rhmiData/uiDescriptions/ID7/uiDescription.json').read_text())
+          repo = json.loads(pathlib.Path('mgu-repo.json').read_text())
+          assert app['schema'] == 1 and app['tree'] == 'package'
+          assert app['id'] == pkg['name'] == rhmi['application']['name']
+          assert app['version'] == pkg['version'] == rhmi['application']['version']
+          assert app['id'] in [c['id'] for c in repo['components']]
+          assert 'ID7' in rhmi['application']['uiDescriptions'][0]['hmi']
+          assert '1' in ui['containers']
+          ET.parse(root/'package/rhmiData/uiDescriptions/ID7/application.xml')
+          for rel in pkg['files']:
+              assert (root/'package'/rel).exists(), f'missing package file: {rel}'
+          for module in app['modules']:
+              assert (root/module).is_file(), f'missing module: {module}'
+          print('OAP source metadata, package files and RHMI XML are valid')
           PY
-      - name: Generate Cyrillic font atlas
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-ubuntu python3-pil
-          python3 - <<'PY'
-          p='upstream/kit/tools/bake_fonts.py'
-          s=open(p,encoding='utf-8').read()
-          old="TEXT = ''.join(chr(c) for c in range(32, 127)) + '°μ│·–—…×±²³€↑↓→←✓✕'"
-          extra='АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя'
-          if old not in s: raise SystemExit('Could not locate standard font charset')
-          open(p,'w',encoding='utf-8').write(s.replace(old,old+" + '"+extra+"'",1))
-          PY
-          cd upstream
-          python3 kit/tools/bake_fonts.py
-      - name: Validate and build ID7 app
-        run: |
-          set -euo pipefail
-          node --check "apps/${APP_ID}/main.js"
-          python3 -m json.tool "apps/${APP_ID}/app.json" >/dev/null
-          cd upstream
-          python3 kit/tools/build.py "${APP_ID}"
-          test -s "dist/${APP_ID}@${APP_VERSION}.tgz"
-          test -s "dist/${APP_ID}@${APP_VERSION}.mgu"
-          mkdir -p ../release
-          cp "dist/${APP_ID}@${APP_VERSION}.tgz" ../release/
-          cp "dist/${APP_ID}@${APP_VERSION}.mgu" ../release/
-          cd ..
-          python3 - <<'PY'
-          import os, tarfile
-          app=os.environ['APP_ID']; ver=os.environ['APP_VERSION']
-          p=f'release/{app}@{ver}.tgz'
-          with tarfile.open(p,'r:gz') as t:
-              names=t.getnames()
-              if not any(n.endswith('/javascript/app.js') for n in names): raise SystemExit('RHMI javascript missing')
-              if not any(n.endswith('/rhmiData/application.json') for n in names): raise SystemExit('RHMI metadata missing')
-          print('RHMI package structure validated')
-          PY
-      - name: Publish app package
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          TAG="${APP_ID}@${APP_VERSION}"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" "release/${APP_ID}@${APP_VERSION}.tgz" "release/${APP_ID}@${APP_VERSION}.mgu" --repo "$GITHUB_REPOSITORY" --clobber
-          else
-            gh release create "$TAG" "release/${APP_ID}@${APP_VERSION}.tgz" "release/${APP_ID}@${APP_VERSION}.mgu" --repo "$GITHUB_REPOSITORY" --title "BMW Weather Diagnostics RHMI ${APP_VERSION}" --notes "Standalone graphical diagnostics app for BMW MGU ID7. Requires the BMW Weather Diagnostics background tool (andrug-bmwweather-diagnostics) to be installed separately. Experimental; verify on target vehicle."
-          fi
