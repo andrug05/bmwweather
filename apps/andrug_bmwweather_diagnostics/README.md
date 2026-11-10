@@ -1,15 +1,12 @@
-# BMW Weather Diagnostics — RHMI app
+# BMW Weather Diagnostics — native OAP app
 
-Отдельное графическое приложение для BMW MGU ID7. Показывает состояние:
-- BMW Weather Bridge;
-- MGU Store Uplink и DNS;
-- HTTPS-запроса к MET Norway;
-- нативного Weather cache и прав записи;
-- диагностического отчёта самого Bridge.
+This directory is a source-package app for BMW MGU ID7. MGU Store discovers it through the root `mgu-repo.json`, reads `mgu-app.json`, and builds the package on the head unit using the installed BMW OAP SDK.
 
-Кнопка «Проверить» создаёт запрос в общем OAP data-каталоге. Фоновый сервис
-обрабатывает его и обновляет `bmwweather-diagnostics.json`. Интерфейс не
-изменяет кэш погоды и не перезапускает Weather Bridge.
+- `mgu-app.json`: source modules and SDK modules.
+- `src/diagnostics.js`: RHMI application logic.
+- `package/`: OAP package metadata and ID7 RHMI resources.
+- `package/rhmiData/variantGroups/Common/images/`: app tile icon.
 
-Сборка выполняется MGU App Kit из `aurelmarius/bmw-games`. Итоговые файлы:
-`andrug_bmwweather_diagnostics@0.1.0.mgu` и `.tgz`.
+The app reads the report written by the background `andrug-bmwweather-diagnostics` tool and requests a new check by creating `bmwweather-diagnostics.request` in the shared OAP data directory.
+
+The old `0.1.0` bmw-games release is not compatible with the MGU Store app catalog and must not be used.
