@@ -1,50 +1,41 @@
 # Installation on BMW MGU ID7
 
-## Add the source
+## Add the repository source
 
 1. In MGU Store, open **Settings → Add source**.
 2. Enter `andrug05/bmwweather`.
 3. Select **Branch → main**.
-4. Refresh/check the source so both components appear.
+4. Refresh/check the source so the components are listed.
 
 ## BMW Weather Bridge
 
-Install **BMW Weather Bridge** to fetch MET Norway forecasts and write the native BMW Weather cache. It runs as UID 12256 and uses MGU Store's `mgu-uplink`.
+Install **BMW Weather Bridge** to fetch MET Norway forecasts and write the candidate native BMW Weather cache. It runs as UID 12256 and uses MGU Store's `mgu-uplink`.
 
-## BMW Weather Diagnostics (separate tool)
+## BMW Weather Diagnostics — background tool
 
-Install **BMW Weather Diagnostics** as a separate component. It has its own UID (12257), its own internet permission and its own service. It does not modify the Weather Bridge, restart it, or write to the native Weather cache.
+Install the separate **BMW Weather Diagnostics** tool. It has its own UID (12257), its own internet permission and its own service. It does not modify the Weather Bridge, restart it, or write to the native Weather cache.
 
-After installation, wait about 20 seconds. The diagnostic tool creates two easy-to-copy reports:
-
+It writes:
 ```text
 /var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.txt
 /var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.json
 ```
 
-The text report gives a compact status per check; the JSON contains details. Both are written with mode `0644`. The tool refreshes local checks every five minutes. It does not request the MET Norway forecast more often than once every three hours during one service lifetime, respecting the provider's request policy.
-
-The diagnostics check:
-- whether the Bridge process and component directory exist;
-- the diagnostic process UID/GID;
-- app-specific and system MGU uplink lease presence;
-- DNS resolution and HTTPS forecast retrieval from MET Norway;
-- native Weather cache readability and expected JSON envelope;
-- availability of the Bridge's own diagnostic report.
-
-No root access is required for normal use. If the shared OAP data directory itself is inaccessible, the tool reports the failure in its service log; it does not attempt privilege escalation.
+The text report gives a compact status per check; the JSON contains details. Local checks run every five minutes. MET Norway forecast requests are limited to once every three hours during one service lifetime.
 
 ## BMW Weather Diagnostics — graphical app
 
-A separate RHMI application for MGU ID7 is built from the MGU App Kit. It appears as **BMW Weather Diagnostics** in the app list and displays Bridge, Uplink, DNS, MET Norway HTTPS, native cache and cache-permission results.
+The graphical application is a separate **native OAP/RHMI source app**, registered in the repository's `mgu-repo.json`. It is not the old bmw-games build.
 
-1. Install the background **BMW Weather Diagnostics** tool from the `main` source (version 0.1.1 or newer).
-2. Download the matching `andrug_bmwweather_diagnostics@VERSION.tgz` or `.mgu` package from the repository's **Diagnostics RHMI** release.
-3. Install the app package with MGU Store's local-package installation flow.
-4. Open the app and press **Проверить**. The app sends a request to the background service; the report refreshes on screen.
+1. Refresh the `andrug05/bmwweather` **main** source in MGU Store.
+2. Install the background **BMW Weather Diagnostics** tool first.
+3. Find **BMW Weather Diagnostics** in the app section of the same source and install it.
+4. Open the new app tile and press **Проверить**. It reads the background report and requests a new run when pressed.
 
-The app and background tool are separate packages and both are required. The RHMI app does not perform network requests itself and does not modify the Weather cache.
+Both the background tool and the graphical app are required for interactive diagnostics. The app itself does not make network requests or modify the Weather cache.
+
+**Do not install the old 0.1.0 RHMI release asset.** It was built in the wrong package format and is obsolete.
 
 ## Remove
 
-The two components can be installed and removed independently from MGU Store. Removing Diagnostics does not remove or change the Bridge. Removing the Bridge does not remove Diagnostics.
+The background tool and graphical app can be installed and removed independently from MGU Store. Removing Diagnostics does not remove or change the Bridge. Removing the Bridge does not remove Diagnostics.

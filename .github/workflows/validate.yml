@@ -24,10 +24,10 @@ jobs:
           node --check native/andrug_bmwweather_bridge/bridge.js
           node --check native/andrug_bmwweather_bridge/uplink.js
           node --check native/andrug_bmwweather_diagnostics/diagnostics.js
-          node --check apps/andrug_bmwweather_diagnostics/main.js
+          node --check apps/andrug_bmwweather_diagnostics/src/diagnostics.js
           grep -q "bmwweather-diagnostics.json" native/andrug_bmwweather_bridge/bridge.js
           grep -q "bmwweather-diagnostics.txt" native/andrug_bmwweather_diagnostics/diagnostics.js
-          echo "Bridge and standalone diagnostics syntax OK"
+          echo "Bridge, background diagnostics and native RHMI app syntax OK"
       - name: Validate JSON manifests
         run: |
           node - <<'NODE'
@@ -36,14 +36,20 @@ jobs:
             'native/andrug_bmwweather_bridge/component.json',
             'native/andrug_bmwweather_bridge/config.json',
             'native/andrug_bmwweather_diagnostics/component.json',
-            'apps/andrug_bmwweather_diagnostics/app.json',
+            'apps/andrug_bmwweather_diagnostics/mgu-app.json',
+            'apps/andrug_bmwweather_diagnostics/package/package.json',
+            'apps/andrug_bmwweather_diagnostics/package/manifest.json',
+            'apps/andrug_bmwweather_diagnostics/package/permissions.json',
+            'apps/andrug_bmwweather_diagnostics/package/rhmiData/application.json',
+            'apps/andrug_bmwweather_diagnostics/package/rhmiData/uiDescriptions/ID7/uiDescription.json',
             'config.example.json',
             'mgu-repo.json'
           ];
           for (const file of files) JSON.parse(fs.readFileSync(file, 'utf8'));
           const repo = JSON.parse(fs.readFileSync('mgu-repo.json', 'utf8'));
-          if (!repo.components.some(x => x.id === 'andrug-bmwweather-diagnostics')) throw new Error('Diagnostics component missing from catalog');
-          console.log('JSON manifests and MGU catalog OK');
+          if (!repo.components.some(x => x.id === 'andrug-bmwweather-diagnostics')) throw new Error('Background diagnostics tool missing from repo tree');
+          if (!repo.components.some(x => x.id === 'andrug_bmwweather_diagnostics' && x.kind === 'app' && x.build === 'unit')) throw new Error('Native RHMI app missing from repo tree');
+          console.log('JSON manifests and MGU repo tree OK');
           NODE
       - name: Probe MET Norway API
         run: |
