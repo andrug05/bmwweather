@@ -10,6 +10,7 @@ const DATA = '/var/opt/public/oap/oap_12214/data';
 const CACHE = path.join(DATA, 'weatherDataCache.json');
 const REPORT = path.join(DATA, 'bmwweather-diagnostics.json');
 const SUMMARY = path.join(DATA, 'bmwweather-diagnostics.txt');
+const TRIGGER = path.join(DATA, 'bmwweather-diagnostics.request');
 const BRIDGE_DIR = '/var/opt/andrug-bmwweather-bridge/current';
 const BRIDGE_UNIT = 'andrug-bmwweather-bridge.service';
 const OWN_LEASE = path.join(DATA, 'uplink.json');
@@ -191,7 +192,7 @@ function writeReport(report) {
     return { ok: false, error: e.code || e.message };
   }
 }
-async function run() {
+async function runOnce() {
   const lease = dnsServers();
   const checks = {};
   checks.bridge = bridgeCheck();
@@ -216,8 +217,28 @@ async function run() {
   const saved = writeReport(report);
   console.log('[BMW-WEATHER-DIAG] ' + JSON.stringify({ overall: overall, saved: saved, checks: statuses }));
 }
+let runBusy = false;
+async function run() {
+  if (runBusy) return;
+  runBusy = true;
+  try { await runOnce(); }
+  finally { runBusy = false; }
+}
 async function loop() {
   try { await run(); } catch (e) { console.error('[BMW-WEATHER-DIAG] fatal:', e.stack || e.message); }
   setTimeout(loop, LOOP_INTERVAL);
 }
+function watchRequests() {
+  try {
+    if (fs.existsSync(TRIGGER)) {
+      const request = readJson(TRIGGER);
+      fs.unlinkSync(TRIGGER);
+      console.log('[BMW-WEATHER-DIAG] manual request received: ' + (request && request.source || 'unknown'));
+      run().catch(e => console.error('[BMW-WEATHER-DIAG] request failed:', e.stack || e.message));
+    }
+  } catch (e) {
+    console.error('[BMW-WEATHER-DIAG] request watcher:', e.code || e.message);
+  }
+}
+setInterval(watchRequests, 1000);
 loop();
