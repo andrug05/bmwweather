@@ -1,25 +1,39 @@
 # Installation on BMW MGU ID7
 
-## MGU Store installation
+## Add the source
 
 1. In MGU Store, open **Settings → Add source**.
 2. Enter `andrug05/bmwweather`.
 3. Select **Branch → main**.
-4. Open **BMW Weather Bridge** and select **Install**.
+4. Refresh/check the source so both components appear.
 
-The component installs and enables `andrug-bmwweather-bridge.service`. It runs as UID `12256`, uses MGU Store's `mgu-uplink` for internet access, and writes the native Weather cache. The bundled configuration uses Yoshkar-Ola coordinates and UTC+03:00.
+## BMW Weather Bridge
 
-**Important:** installation enables the service, which periodically writes the native Weather cache. It creates a timestamped backup before replacing an existing cache file. The native app's acceptance of the generated data is experimental and must be checked on the car.
+Install **BMW Weather Bridge** to fetch MET Norway forecasts and write the native BMW Weather cache. It runs as UID 12256 and uses MGU Store's `mgu-uplink`.
 
-## Data source
+## BMW Weather Diagnostics (separate tool)
 
-The bridge uses MET Norway Locationforecast 2.0. No API key is required. The provider requires a descriptive User-Agent with contact information. The default refresh interval is 180 minutes because forecasts outside the Nordic region update every six hours and identical requests should not be repeated more often than every three hours. Attribution: **Weather data from MET Norway** (CC BY 4.0).
+Install **BMW Weather Diagnostics** as a separate component. It has its own UID (12257), its own internet permission and its own service. It does not modify the Weather Bridge, restart it, or write to the native Weather cache.
 
-## Rollback
+After installation, wait about 20 seconds. The diagnostic tool creates two easy-to-copy reports:
 
-Remove **BMW Weather Bridge** from MGU Store. If the native Weather app does not display the forecast, restore the timestamped cache backup created by the bridge. Do not remove or modify the native Weather OAP application.
+```text
+/var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.txt
+/var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.json
+```
 
+The text report gives a compact status per check; the JSON contains details. Both are written with mode `0644`. The tool refreshes local checks every five minutes. It does not request the MET Norway forecast more often than once every three hours during one service lifetime, respecting the provider's request policy.
 
-## Diagnostics (v0.2.2)
+The diagnostics check:
+- whether the Bridge process and component directory exist;
+- the diagnostic process UID/GID;
+- app-specific and system MGU uplink lease presence;
+- DNS resolution and HTTPS forecast retrieval from MET Norway;
+- native Weather cache readability and expected JSON envelope;
+- availability of the Bridge's own diagnostic report.
 
-The service writes a JSON report to `/var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.json` with mode `0644`, so it can be read by non-root processes that have access to the shared OAP data directory. It records service identity, the app-specific MGU Store uplink lease, DNS resolution, MET Norway HTTPS access, forecast parsing, native payload validation, and cache write/read-back. Errors are stored in `lastError`; no private keys or full uplink lease contents are included. The service also emits `DIAG` journal lines for each stage.
+No root access is required for normal use. If the shared OAP data directory itself is inaccessible, the tool reports the failure in its service log; it does not attempt privilege escalation.
+
+## Remove
+
+The two components can be installed and removed independently from MGU Store. Removing Diagnostics does not remove or change the Bridge. Removing the Bridge does not remove Diagnostics.
