@@ -1,9 +1,9 @@
 {
   "id": "andrug-bmwweather-bridge",
   "kind": "tool",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "title": "BMW Weather Bridge",
-  "description": "Feeds the native BMW ID7 Weather cache from Open-Meteo",
+  "description": "Feeds the native BMW ID7 Weather cache from MET Norway Locationforecast",
   "mguHmi": [
     "ID7"
   ],
