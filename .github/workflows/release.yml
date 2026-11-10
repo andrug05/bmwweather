@@ -6,7 +6,7 @@ on:
       version:
         description: "Release tag (for example v0.1.0)"
         required: true
-        default: "v0.2.2"
+        default: "v0.2.3"
         type: string
 
 permissions:
@@ -45,11 +45,11 @@ jobs:
           prerelease: true
           generate_release_notes: true
           body: |
-            **Experimental pre-release v0.2.2. The bridge runs as UID 12256 with GID 12214; component metadata grants UID 12256 access through mgu-uplink. Weather data from MET Norway Locationforecast is normalized and written to the native Weather OAP cache.**
+            **Experimental pre-release v0.2.3. The bridge runs as UID 12256 with GID 12214; component metadata grants UID 12256 access through mgu-uplink. Weather data from wttr.in JSON is normalized and written to the native Weather OAP cache.**
 
-            This package is a prototype bridge that fetches weather from MET Norway Locationforecast 2.0 and writes a candidate payload to the native BMW Weather cache. MET Norway requires a descriptive User-Agent and a minimum three-hour request interval outside the Nordic region.
+            This package fetches weather from wttr.in JSON (format=j1) and writes a candidate payload to the native BMW Weather cache. No API key is required. DNS resolution follows the BMWCamInfo mgu-uplink model.
 
-            Install through MGU Store. The service writes a non-root-readable diagnostic report to `/var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.json` and emits `DIAG` lines to its journal. The report checks service UID/GID, app-specific mgu-uplink lease, DNS, MET Norway HTTPS, forecast parsing, native payload validation, and cache write/read-back.
+            Install through MGU Store. The service writes a non-root-readable diagnostic report to `/var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.json` and emits `DIAG` lines to its journal. The report checks service UID/GID, MGU uplink lease, DNS, wttr.in HTTPS, forecast parsing, native payload validation, and cache write/read-back.
           files: |
             dist/bmwweather-${{ inputs.version }}-source.zip
             dist/SHA256SUMS.txt
