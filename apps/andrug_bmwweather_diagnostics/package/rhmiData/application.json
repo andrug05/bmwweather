@@ -11,7 +11,9 @@
       {
         "applicationFilePath": "./uiDescriptions/ID7/application.xml",
         "uiDescriptionFilePath": "./uiDescriptions/ID7/uiDescription.json",
-        "hmi": ["ID7"]
+        "hmi": [
+          "ID7"
+        ]
       }
     ],
     "stringBundleUuid": "2b3f31a8-98d8-4c1f-b3e4-0e38b7a2d7f1",
@@ -20,8 +22,12 @@
       {
         "stringsPath": "./variantGroups/Common/texts",
         "resourcesPath": "./variantGroups/Common/images",
-        "hmi": ["ID7"],
-        "brands": ["BMW"]
+        "hmi": [
+          "ID7"
+        ],
+        "brands": [
+          "BMW"
+        ]
       }
     ],
     "entryPoints": [
@@ -39,7 +45,8 @@
         "private": null,
         "appearance": "DEFAULT",
         "isGroupHeader": false,
-        "insertionGroup": 0
+        "insertionGroup": 0,
+        "icon": "andrug_bmwweather_diagnostics_icon.png"
       }
     ]
   }
