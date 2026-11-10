@@ -1,0 +1,33 @@
+{
+  "id": "andrug-bmwweather-diagnostics",
+  "kind": "tool",
+  "version": "0.1.0",
+  "title": "BMW Weather Diagnostics",
+  "description": "Standalone diagnostics for BMW Weather Bridge, MGU Store uplink, MET Norway and the native Weather cache",
+  "mguHmi": ["ID7"],
+  "uninstallable": true,
+  "internet": true,
+  "uids": [12257],
+  "files": [
+    {
+      "path": "diagnostics.js",
+      "from": "diagnostics.js",
+      "mode": "0644"
+    }
+  ],
+  "units": [
+    {
+      "name": "andrug-bmwweather-diagnostics.service",
+      "from": "andrug-bmwweather-diagnostics.service"
+    }
+  ],
+  "enable": [
+    {
+      "unit": "andrug-bmwweather-diagnostics.service",
+      "target": "multi-user.target"
+    }
+  ],
+  "restart": [
+    "andrug-bmwweather-diagnostics.service"
+  ]
+}
