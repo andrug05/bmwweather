@@ -49,7 +49,7 @@ function getJson(url, timeoutMs) {
       port: parsed.port || 443,
       path: (parsed.pathname || '/') + (parsed.search || ''),
       method: 'GET',
-      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.1.9' }
+      headers: { Accept: 'application/json', 'User-Agent': 'BMWWeatherBridge/0.2.0 https://github.com/andrug05/bmwweather/issues' }
     };
     const req = https.get(options, res => {
       let body = '';
@@ -188,7 +188,7 @@ function buildNativeEntry(c, raw) {
       }
     });
   }
-  return { provider: 'Open-Meteo', language: c.language, weatherList: days, alerts: [] };
+  return { provider: 'MET Norway', language: c.language, weatherList: days, alerts: [] };
 }
 function validateNativeEntry(entry) {
   if (!entry || !entry.data || !Array.isArray(entry.data.weatherList) || entry.data.weatherList.length < 1) throw new Error('Native payload has no weatherList');
@@ -217,15 +217,113 @@ function backupAndWrite(file, data, keep) {
   fs.writeFileSync(tmp, JSON.stringify([data], null, 2), { mode: 0o644 });
   fs.renameSync(tmp, file);
 }
+
+function metSymbolCode(symbol) {
+  const s = String(symbol || '').replace(/_(day|night|polartwilight)$/, '');
+  if (s === 'clearsky') return 0;
+  if (s === 'fair') return 1;
+  if (s === 'partlycloudy') return 2;
+  if (s === 'cloudy') return 3;
+  if (s === 'fog') return 45;
+  if (/^lightrainandthunder$/.test(s)) return 95;
+  if (/^(rain|heavyrain)andthunder$/.test(s)) return 99;
+  if (/^(lightsnow|snow|heavysnow)andthunder$/.test(s)) return 96;
+  if (/^heavyrain/.test(s)) return 65;
+  if (/^rainshowers/.test(s)) return 81;
+  if (/^heavyrainshowers/.test(s)) return 82;
+  if (/^lightrainshowers/.test(s)) return 80;
+  if (/^lightrain/.test(s)) return 61;
+  if (/^rain/.test(s)) return 63;
+  if (/^heavysnowshowers/.test(s)) return 86;
+  if (/^snowshowers/.test(s)) return 85;
+  if (/^lightsnow/.test(s)) return 71;
+  if (/^heavysnow/.test(s)) return 75;
+  if (/^snow/.test(s)) return 73;
+  if (/sleet/.test(s)) return 77;
+  return 3;
+}
+function metLocalTime(iso, offsetSeconds) {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) throw new Error('Invalid MET Norway timestamp: ' + iso);
+  return new Date(d.getTime() + offsetSeconds * 1000).toISOString().slice(0, 19);
+}
+function buildMetRaw(payload, c) {
+  const series = payload && payload.properties && payload.properties.timeseries;
+  if (!Array.isArray(series) || !series.length) throw new Error('MET Norway response has no properties.timeseries');
+  const offset = numberOr(c.utcOffsetSeconds, 10800);
+  const hourly = {
+    time: [], temperature_2m: [], relative_humidity_2m: [], apparent_temperature: [],
+    precipitation_probability: [], precipitation: [], weather_code: [],
+    wind_speed_10m: [], wind_direction_10m: []
+  };
+  series.forEach(item => {
+    const details = item.data && item.data.instant && item.data.instant.details || {};
+    const next = item.data && (item.data.next_1_hours || item.data.next_6_hours || item.data.next_12_hours) || {};
+    const nextDetails = next.details || {};
+    const symbol = next.summary && next.summary.symbol_code;
+    hourly.time.push(metLocalTime(item.time, offset));
+    hourly.temperature_2m.push(numberOr(details.air_temperature, null));
+    hourly.relative_humidity_2m.push(numberOr(details.relative_humidity, null));
+    hourly.apparent_temperature.push(numberOr(details.apparent_air_temperature, numberOr(details.air_temperature, null)));
+    hourly.precipitation_probability.push(numberOr(nextDetails.precipitation_probability, 0));
+    hourly.precipitation.push(numberOr(nextDetails.precipitation_amount, 0));
+    hourly.weather_code.push(metSymbolCode(symbol));
+    hourly.wind_speed_10m.push(numberOr(details.wind_speed, 0) * 3.6);
+    hourly.wind_direction_10m.push(numberOr(details.wind_from_direction, 0));
+  });
+  const groups = {};
+  hourly.time.forEach((time, i) => {
+    const date = time.slice(0, 10);
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(i);
+  });
+  const dates = Object.keys(groups).sort().slice(0, 5);
+  const daily = {
+    time: dates, weather_code: [], temperature_2m_mean: [], temperature_2m_min: [],
+    temperature_2m_max: [], precipitation_probability_max: [], precipitation_sum: [],
+    sunrise: [], sunset: [], wind_speed_10m_max: [], wind_direction_10m_dominant: []
+  };
+  const mean = values => values.length ? values.reduce((a,b)=>a+b,0)/values.length : 0;
+  dates.forEach(date => {
+    const ix = groups[date];
+    const vals = key => ix.map(i => hourly[key][i]).filter(v => v !== null && v !== undefined && Number.isFinite(Number(v))).map(Number);
+    const temps = vals('temperature_2m');
+    const codes = vals('weather_code');
+    const counts = {};
+    codes.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+    const dominantCode = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0] || 3;
+    daily.weather_code.push(Number(dominantCode));
+    daily.temperature_2m_mean.push(mean(temps));
+    daily.temperature_2m_min.push(temps.length ? Math.min.apply(null, temps) : 0);
+    daily.temperature_2m_max.push(temps.length ? Math.max.apply(null, temps) : 0);
+    daily.precipitation_probability_max.push(Math.max.apply(null, vals('precipitation_probability').concat([0])));
+    daily.precipitation_sum.push(vals('precipitation').reduce((a,b)=>a+b,0));
+    daily.sunrise.push('');
+    daily.sunset.push('');
+    daily.wind_speed_10m_max.push(Math.max.apply(null, vals('wind_speed_10m').concat([0])));
+    daily.wind_direction_10m_dominant.push(mean(vals('wind_direction_10m')));
+  });
+  const first = series[0].data && series[0].data.instant && series[0].data.instant.details || {};
+  const firstNext = series[0].data && (series[0].data.next_1_hours || series[0].data.next_6_hours) || {};
+  return {
+    utc_offset_seconds: offset, hourly, daily,
+    current: {
+      temperature_2m: numberOr(first.air_temperature, 0),
+      relative_humidity_2m: numberOr(first.relative_humidity, 60),
+      apparent_temperature: numberOr(first.apparent_air_temperature, numberOr(first.air_temperature, 0)),
+      precipitation: numberOr(firstNext.details && firstNext.details.precipitation_amount, 0),
+      weather_code: metSymbolCode(firstNext.summary && firstNext.summary.symbol_code),
+      wind_speed_10m: numberOr(first.wind_speed, 0) * 3.6,
+      wind_direction_10m: numberOr(first.wind_from_direction, 0)
+    }
+  };
+}
+
 async function update(c) {
-  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + encodeURIComponent(c.latitude) +
-    '&longitude=' + encodeURIComponent(c.longitude) +
-    '&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m' +
-    '&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m' +
-    '&daily=weather_code,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,precipitation_probability_max,sunrise,sunset,wind_speed_10m_max,wind_direction_10m_dominant' +
-    '&forecast_days=5&timezone=auto&temperature_unit=celsius&wind_speed_unit=kmh';
-  const raw = await getJson(url, c.requestTimeoutMs);
-  if (!raw || !raw.daily || !raw.hourly || !raw.daily.time || !raw.daily.time.length || !raw.hourly.time) throw new Error('Open-Meteo response is missing forecast data');
+  const url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=' + encodeURIComponent(Number(c.latitude).toFixed(4)) +
+    '&lon=' + encodeURIComponent(Number(c.longitude).toFixed(4));
+  const response = await getJson(url, c.requestTimeoutMs);
+  const raw = buildMetRaw(response, c);
   const entry = {
     timestamp: new Date().toISOString(),
     localWeather: true,
