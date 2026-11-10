@@ -2,8 +2,8 @@
 
 This repository provides two background MGU Store tools and a separate graphical RHMI application:
 
-- **BMW Weather Bridge** fetches global forecasts from MET Norway Locationforecast and writes a candidate BMW Weather cache.
-- **BMW Weather Diagnostics (tool)** checks the Bridge, MGU Store uplink, DNS, MET Norway HTTPS, native Weather cache and permissions. It writes JSON and text reports.
+- **BMW Weather Bridge** fetches global forecasts from wttr.in and writes a candidate BMW Weather cache.
+- **BMW Weather Diagnostics (tool)** checks the Bridge, MGU Store uplink, DNS, weather-provider HTTPS, native Weather cache and permissions. It writes JSON and text reports.
 - **BMW Weather Diagnostics (app)** is a native OAP/RHMI app for the MGU ID7 application list. It displays the report and can request a new check from the background tool.
 
 > **Experimental / not yet validated on a vehicle.** A successful network request or cache write does not prove the native BMW Weather app accepted or displayed the forecast.
@@ -29,7 +29,7 @@ Local checks run every five minutes. MET Norway forecast requests are limited to
 
 ## Data source and request policy
 
-The Bridge uses MET Norway Locationforecast 2.0. No API key is required. The provider requires a descriptive User-Agent. The Bridge refresh interval is 180 minutes. Attribution: **Weather data from MET Norway** (CC BY 4.0).
+The Bridge requests wttr.in JSON (`format=j1`) and requires no API key. It initializes the same `uplink.js` DNS resolver model used by [BMWCamInfo](https://github.com/andrug05/bmwcaminfo) before making ordinary HTTPS requests. The component grants internet access to UID 12256. The default refresh interval is 180 minutes.
 
 ## Compatibility
 
