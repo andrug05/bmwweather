@@ -5,7 +5,8 @@
   "latitude": 56.6388,
   "longitude": 47.8908,
   "language": "ru",
-  "refreshMinutes": 30,
+  "refreshMinutes": 180,
   "requestTimeoutMs": 15000,
-  "keepBackups": 5
+  "keepBackups": 5,
+  "utcOffsetSeconds": 10800
 }
