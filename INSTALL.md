@@ -18,3 +18,8 @@ The bridge uses MET Norway Locationforecast 2.0. No API key is required. The pro
 ## Rollback
 
 Remove **BMW Weather Bridge** from MGU Store. If the native Weather app does not display the forecast, restore the timestamped cache backup created by the bridge. Do not remove or modify the native Weather OAP application.
+
+
+## Diagnostics (v0.2.2)
+
+The service writes a JSON report to `/var/opt/public/oap/oap_12214/data/bmwweather-diagnostics.json` with mode `0644`, so it can be read by non-root processes that have access to the shared OAP data directory. It records service identity, the app-specific MGU Store uplink lease, DNS resolution, MET Norway HTTPS access, forecast parsing, native payload validation, and cache write/read-back. Errors are stored in `lastError`; no private keys or full uplink lease contents are included. The service also emits `DIAG` journal lines for each stage.
