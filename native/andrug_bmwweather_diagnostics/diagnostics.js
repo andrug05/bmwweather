@@ -204,8 +204,8 @@ async function runOnce() {
   const dnsResult = await resolveHost(API, lease.servers);
   checks.dns = result(dnsResult.ok ? 'ok' : 'error', dnsResult.ok ? 'wttr.in hostname resolved' : 'wttr.in DNS lookup failed', dnsResult);
   const api = await checkApi(lease.servers);
-  checks.metNorway = result(api.ok && api.timeseries > 0 ? 'ok' : 'error',
-    api.ok && api.timeseries > 0 ? 'MET Norway returned a forecast' : 'MET Norway request or forecast validation failed', api);
+  checks.metNorway = result(api.ok && api.weatherDays > 0 ? 'ok' : 'error',
+    api.ok && api.weatherDays > 0 ? 'wttr.in returned a forecast' : 'wttr.in request or forecast validation failed', api);
   checks.cache = cacheCheck();
   checks.cacheWritePermission = bridgeCacheWriteCheck();
   checks.bridgeDiagnostics = (function () {
