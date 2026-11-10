@@ -1,5 +1,5 @@
 [Unit]
-Description=BMW ID7 Weather cache bridge (Open-Meteo)
+Description=BMW ID7 Weather cache bridge (MET Norway)
 After=network.target mgu-uplink.service
 Wants=mgu-uplink.service
 
